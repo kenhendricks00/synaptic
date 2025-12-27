@@ -1,0 +1,55 @@
+[package]
+name = "synaptic"
+version = "0.1.0"
+description = "A local-first, AI-powered personal knowledge base"
+authors = ["Kenneth"]
+edition = "2021"
+
+[lib]
+name = "synaptic_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+# Tauri core
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-dialog = "2"
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# File watching
+notify = "6"
+
+# Markdown parsing
+pulldown-cmark = "0.9"
+
+# Full-text search
+# tantivy removed to fix zstd conflict, currently unused
+# tantivy = { version = "0.21", features = ["mmap"] }
+
+# AI / Embeddings
+fastembed = "4"
+reqwest = { version = "0.12", features = ["json", "stream"] }
+
+# UUID generation
+uuid = { version = "1", features = ["v4", "fast-rng", "macro-diagnostics"] }
+
+# Date/time
+chrono = { version = "0.4", features = ["serde"] }
+
+# Error handling
+thiserror = "1"
+anyhow = "1"
+
+# Logging
+log = "0.4"
+env_logger = "0.10"

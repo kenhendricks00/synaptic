@@ -598,8 +598,40 @@ a {
     border-color: rgba(139, 92, 246, 0.3);
 }
 
-.plugin-icon {
-    font-size: 2rem;
+.plugin-icon-box {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(139, 92, 246, 0.05));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.plugin-icon-box i {
+    width: 28px;
+    height: 28px;
+}
+
+.icon-orange {
+    color: #fb923c;
+}
+
+.icon-blue {
+    color: #60a5fa;
+}
+
+.icon-pink {
+    color: #ec4899;
+}
+
+.icon-purple {
+    color: #c084fc;
+}
+
+.plugin-info {
+    flex: 1;
 }
 
 .plugin-card h4 {

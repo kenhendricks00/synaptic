@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synaptic Plugin Development Guide</title>
+    <meta name="description" content="Learn how to build plugins for Synaptic.">
+    <link rel="icon" type="image/png" href="../logo.png">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Highlight.js for code blocks -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Documentation specific overrides */
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .docs-container {
+            max-width: 900px;
+            margin: 100px auto 60px;
+            padding: 0 24px;
+        }
+
+        .docs-header {
+            margin-bottom: 48px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .docs-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .docs-subtitle {
+            font-size: 1.125rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .docs-content h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-top: 48px;
+            margin-bottom: 24px;
+            color: var(--text-primary);
+            scroll-margin-top: 100px;
+        }
+
+        .docs-content h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 32px;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        .docs-content p {
+            font-size: 1rem;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .docs-content ul,
+        .docs-content ol {
+            margin-bottom: 24px;
+            padding-left: 24px;
+            color: var(--text-secondary);
+        }
+
+        .docs-content li {
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+
+        .docs-content code {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #bdc6ff;
+        }
+
+        .docs-content pre {
+            background: #1e1e24;
+            padding: 24px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            overflow-x: auto;
+            margin-bottom: 24px;
+        }
+
+        .docs-content pre code {
+            background: transparent;
+            padding: 0;
+            color: inherit;
+            font-size: 0.9rem;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin-bottom: 32px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--accent-primary);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Simple Nav -->
+    <nav class="nav" style="background: rgba(10, 10, 12, 0.8);">
+        <div class="nav-container">
+            <a href="index.html" class="nav-logo">
+                <div class="logo-icon">
+                    <img src="logo.png" alt="Synaptic" class="logo-img">
+                </div>
+                <span>Synaptic</span>
+            </a>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="#" class="active">Docs</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-container">
+        <a href="index.html" class="back-link">
+            <i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i>
+            Back to Home
+        </a>
+
+        <div class="docs-header">
+            <h1 class="docs-title">Plugin Development Guide</h1>
+            <p class="docs-subtitle">Extend Synaptic with custom functionality using TypeScript. Learn the architecture,
+                API, and best practices for building powerful plugins.</p>
+        </div>
+
+        <div class="docs-content">
+            <h2 id="architecture">Architecture</h2>
+            <p>The Synaptic plugin system is built on a few core components:</p>
+            <ul>
+                <li><strong>Plugin Types</strong> (<code>src/plugins/types.ts</code>): Defines the core interfaces.</li>
+                <li><strong>Plugin Manager</strong>: Handles lifecycle (load, enable, disable).</li>
+                <li><strong>Plugin Store</strong>: Zustand store for managing plugin state.</li>
+            </ul>
+
+            <h2 id="creating-a-plugin">Creating a Plugin</h2>
+            <p>A basic plugin implements the <code>Plugin</code> interface. Here is a minimal example:</p>
+
+            <pre><code class="language-typescript">import type { Plugin } from '../../plugins/types';
+
+export class MyPlugin implements Plugin {
+    id = 'my-plugin';
+    name = 'My Plugin';
+    version = '1.0.0';
+    description = 'My amazing plugin for Synaptic';
+    author = 'Developer',
+    category = 'productivity';
+
+    async onLoad() {
+        console.log('Plugin loaded!');
+    }
+
+    async onEnable() {
+        // Initialize your logic here
+    }
+}</code></pre>
+
+            <h2 id="ui-components">Adding UI Components</h2>
+            <p>Plugins can inject components into various parts of the app:</p>
+            <pre><code class="language-typescript">components = {
+    view: MyFullPageView,      // Renders as a main view
+    sidebar: MySidebarWidget,  // Renders in the sidebar
+    settings: MySettingsPage   // Custom settings UI
+};</code></pre>
+
+            <h2 id="commands">Commands</h2>
+            <p>Register commands to appear in the Command Palette (Cmd+K):</p>
+            <pre><code class="language-typescript">commands = [
+    {
+        id: 'say-hello',
+        name: 'Say Hello',
+        description: 'Prints hello to console',
+        handler: () => console.log('Hello World!')
+    }
+];</code></pre>
+
+            <h2 id="permissions">Permissions</h2>
+            <p>Plugins must request permissions in their manifest:</p>
+            <ul>
+                <li><code>read_notes</code>: Access note content</li>
+                <li><code>write_notes</code>: Modify or create notes</li>
+                <li><code>storage</code>: Persist plugin data</li>
+                <li><code>network</code>: Make external API requests</li>
+            </ul>
+
+            <h2 id="example">Example: Voice Memos</h2>
+            <p>Recently added, the Voice Memos plugin demonstrates how to use the <code>storage</code> permission to
+                save binary files and the <code>write_notes</code> permission to embed them.</p>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        hljs.highlightAll();
+    </script>
+</body>
+
+</html>

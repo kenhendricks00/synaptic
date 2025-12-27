@@ -378,6 +378,61 @@ export async function getAvailablePlugins(): Promise<PluginManifest[]> {
         }
       ]
     },
+    {
+      id: 'web-search',
+      name: 'Web Search',
+      version: '1.0.0',
+      description: 'Search the Web from Synaptic using bangs (e.g., !g for Google, !d for DuckDuckGo).',
+      author: 'Synaptic Team',
+      icon: 'globe',
+      category: 'utility',
+      tags: ['search', 'web', 'browser', 'bangs'],
+      screenshots: [],
+      downloads: 5000,
+      rating: 5.0,
+      lastUpdated: new Date('2025-12-27'),
+      isOfficial: true,
+      permissions: ['network'],
+      minAppVersion: '1.0.0',
+      settingsSchema: [
+        {
+          key: 'defaultEngine',
+          type: 'select',
+          label: 'Default Search Engine',
+          description: 'Engine to use for fallback search',
+          default: '!g',
+          options: [
+            { value: '!g', label: 'Google' },
+            { value: '!d', label: 'DuckDuckGo' },
+            { value: '!w', label: 'Wikipedia' },
+          ],
+        },
+        {
+          key: 'enableFallback',
+          type: 'toggle',
+          label: 'Enable Fallback',
+          description: 'Show web search option when no other results match',
+          default: true
+        }
+      ]
+    },
+    {
+      id: 'voice-memos',
+      name: 'Voice Memos',
+      version: '1.0.0',
+      description: 'Record audio notes with auto-transcription.',
+      author: 'Synaptic Team',
+      icon: 'mic',
+      category: 'productivity',
+      tags: ['audio', 'record', 'transcribe', 'voice'],
+      screenshots: [],
+      downloads: 1500,
+      rating: 4.8,
+      lastUpdated: new Date('2025-12-27'),
+      isOfficial: true,
+      permissions: ['write_notes', 'storage'],
+      minAppVersion: '1.0.0',
+    },
   ];
 }
 

@@ -81,7 +81,11 @@ export function Onboarding({ onComplete }: OnboardingProps) {
         if (selected && typeof selected === 'string') {
             const vaultName = selected.split(/[/\\]/).pop() || 'Vault';
             setCurrentVault({ name: vaultName, path: selected, noteCount: 0, lastOpened: new Date() });
-            const { loadNotesMetadata } = await import('../lib');
+
+            // Initialize with daily note
+            const { loadNotesMetadata, getOrCreateDailyNote } = await import('../lib');
+            await getOrCreateDailyNote(selected);
+
             const notes = await loadNotesMetadata(selected);
             setNoteMetadata(notes);
         }

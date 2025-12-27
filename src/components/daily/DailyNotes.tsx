@@ -48,35 +48,28 @@ export function DailyNotes() {
                     day: 'numeric',
                 });
 
-                // Construct path manually to match CalendarWidget logic
-                // usually we prefer yyyy-MM-dd filename for sorting
-                const filenameDate = today.toISOString().split('T')[0]; // yyyy-MM-dd
-                const dailyPath = `${currentVault.path}/${settings.dailyNotesFolder}/${filenameDate}.md`;
-                const dailyFolder = `${currentVault.path}/${settings.dailyNotesFolder}`;
+                // Templater check and content generation
+                const templater = usePluginStore.getState().installed.get('templater');
+                let initialContent = undefined;
 
-                let note;
-                try {
-                    note = await loadNote(dailyPath);
-                } catch (e) {
-                    // Create new
-
-                    // Templater check
-                    const templater = usePluginStore.getState().installed.get('templater');
-                    let content = `# ${formattedDate}\n\n## Tasks\n- [ ] \n\n## Notes\n`; // Default fallback matching original
-
-                    if (templater?.enabled) {
-                        try {
-                            const plugin = templater.plugin as TemplaterPluginInterface;
-                            if (plugin.generateTemplate) {
-                                content = await plugin.generateTemplate(today);
-                            }
-                        } catch (err) {
-                            console.error('Templater failed in DailyNotes, using default:', err);
+                if (templater?.enabled) {
+                    try {
+                        const plugin = templater.plugin as TemplaterPluginInterface;
+                        if (plugin.generateTemplate) {
+                            initialContent = await plugin.generateTemplate(today);
                         }
+                    } catch (err) {
+                        console.error('Templater failed in DailyNotes, using default:', err);
                     }
-
-                    note = await createNote(dailyFolder, filenameDate, content);
                 }
+
+                // getOrCreateDailyNote handles checking existence, creating folders, and writing if needed
+                const { getOrCreateDailyNote } = await import('../../lib');
+                const note = await getOrCreateDailyNote(
+                    currentVault.path,
+                    settings.dailyNotesFolder,
+                    initialContent
+                );
 
                 setDailyNote(note);
                 addNote(note);

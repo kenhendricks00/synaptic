@@ -3,6 +3,7 @@ import { open } from '@tauri-apps/plugin-dialog';
 import {
     readTextFile,
     writeTextFile,
+    writeFile,
     mkdir,
     remove,
     exists,
@@ -11,6 +12,19 @@ import {
 import type { Note, NoteMetadata, Vault } from '../types';
 import { extractTitle, extractTags, extractLinks } from './utils';
 import { getDailyNoteFilename, getDailyNotePath } from './dates';
+
+/**
+ * Save a binary attachment to the vault
+ */
+export async function saveAttachment(vaultPath: string, filename: string, data: Uint8Array): Promise<string> {
+    const attachmentsFolder = `${vaultPath}/attachments`;
+    if (!(await exists(attachmentsFolder))) {
+        await mkdir(attachmentsFolder, { recursive: true });
+    }
+    const filePath = `${attachmentsFolder}/${filename}`;
+    await writeFile(filePath, data);
+    return `attachments/${filename}`;
+}
 
 /**
  * Open folder picker dialog
@@ -161,7 +175,8 @@ export async function createNote(
  */
 export async function getOrCreateDailyNote(
     vaultPath: string,
-    dailyNotesFolder = 'daily'
+    dailyNotesFolder = 'daily',
+    initialContent?: string
 ): Promise<Note> {
     const today = new Date();
     const folderPath = getDailyNotePath(`${vaultPath}/${dailyNotesFolder}`, today);
@@ -186,7 +201,7 @@ export async function getOrCreateDailyNote(
         day: 'numeric',
     });
 
-    const content = `# ${formattedDate}
+    const content = initialContent || `# ${formattedDate}
 
 ## Morning
 

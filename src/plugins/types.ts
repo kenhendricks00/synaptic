@@ -14,6 +14,15 @@ export interface PluginSettingDefinition {
   max?: number;
 }
 
+export interface SearchResult {
+  id: string;
+  title: string;
+  description: string;
+  icon?: ReactNode;
+  onSelect: () => void | Promise<void>;
+  priority?: number; // Higher is better
+}
+
 /**
  * Plugin interface - all plugins must implement this
  */
@@ -33,6 +42,9 @@ export interface Plugin {
 
   // Declarative settings schema
   settingsSchema?: PluginSettingDefinition[];
+
+  // Dynamic search capability
+  onSearch?: (query: string) => Promise<SearchResult[] | null>;
 
   // Lifecycle hooks
   onLoad?: () => void | Promise<void>;

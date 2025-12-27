@@ -6,15 +6,16 @@ import type { PluginCommand } from '../../plugins/types';
 import { searchNotesLocally, cn } from '../../lib';
 import type { NoteMetadata } from '../../types';
 
-type SearchResult =
+type SearchResultItem =
     | { type: 'note', data: NoteMetadata }
-    | { type: 'command', data: PluginCommand };
+    | { type: 'command', data: PluginCommand }
+    | { type: 'plugin-result', data: import('../../plugins/types').SearchResult };
 
 export function SearchModal() {
     const { searchModalOpen, setSearchModalOpen } = useUIStore();
     const { noteMetadata, setActiveNote, currentVault } = useVaultStore();
     const [query, setQuery] = useState('');
-    const [results, setResults] = useState<SearchResult[]>([]);
+    const [results, setResults] = useState<SearchResultItem[]>([]);
     const [selectedIndex, setSelectedIndex] = useState(0);
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -43,10 +44,40 @@ export function SearchModal() {
                 .filter(cmd => cmd.name.toLowerCase().includes(query.toLowerCase()))
                 .map(cmd => ({ type: 'command' as const, data: cmd }));
 
-            // Combine results: Commands first if query starts with ">", otherwise mixed or notes first
-            // For simplicity: Commands on top if exact match, otherwise notes then commands
-            setResults([...commandResults, ...noteResults].slice(0, 10));
-            setSelectedIndex(0);
+            // Search Plugins (Web Search, etc.)
+            Promise.all(
+                enabledPlugins.map(async (plugin) => {
+                    if (plugin.onSearch) {
+                        try {
+                            const results = await plugin.onSearch(query);
+                            return results || [];
+                        } catch (e) {
+                            console.error(`Plugin ${plugin.name} search error:`, e);
+                            return [];
+                        }
+                    }
+                    return [];
+                })
+            ).then((pluginResults) => {
+                const flatPluginResults = pluginResults.flat().sort((a, b) => (b.priority || 0) - (a.priority || 0));
+
+                // Combine: Plugin High Priority -> Commands -> Notes -> Plugin Low Priority
+                // For simplicity, we'll just put plugin results that are high priority (>0) at top
+
+                const highPriPluginResults = flatPluginResults.filter(r => (r.priority || 0) > 0);
+                const lowPriPluginResults = flatPluginResults.filter(r => (r.priority || 0) <= 0);
+
+                setResults([
+                    ...highPriPluginResults.map(r => ({ type: 'plugin-result' as const, data: r })),
+                    ...commandResults,
+                    ...noteResults,
+                    ...lowPriPluginResults.map(r => ({ type: 'plugin-result' as const, data: r }))
+                ].slice(0, 20));
+                setSelectedIndex(0);
+            });
+
+            // Initial render with just local results to be snappy (optional, but good UX)
+            // But we can let the effect run.
         } else {
             // Show recent notes when no query
             setResults(noteMetadata.slice(0, 5).map(note => ({ type: 'note', data: note })));
@@ -159,8 +190,10 @@ export function SearchModal() {
                                         if (result.type === 'note') {
                                             setActiveNote(result.data.id);
                                             useUIStore.getState().setCurrentView('editor');
-                                        } else {
+                                        } else if (result.type === 'command') {
                                             pluginManager.executeCommand(result.data.id).catch(console.error);
+                                        } else if (result.type === 'plugin-result') {
+                                            result.data.onSelect();
                                         }
                                         setSearchModalOpen(false);
                                     }}
@@ -173,16 +206,25 @@ export function SearchModal() {
                                 >
                                     {result.type === 'note' ? (
                                         <FileText className="w-4 h-4 flex-shrink-0" />
-                                    ) : (
+                                    ) : result.type === 'command' ? (
                                         <Terminal className="w-4 h-4 flex-shrink-0 text-accent" />
+                                    ) : (
+                                        // Plugin Result Icon
+                                        <div className="w-4 h-4 flex-shrink-0 flex items-center justify-center">
+                                            {result.data.icon || <Search className="w-4 h-4" />}
+                                        </div>
                                     )}
 
                                     <div className="flex-1 min-w-0">
                                         <div className="truncate font-medium">
-                                            {result.type === 'note' ? result.data.title : result.data.name}
+                                            {result.type === 'note' ? result.data.title :
+                                                result.type === 'command' ? result.data.name :
+                                                    result.data.title}
                                         </div>
                                         <div className="truncate text-sm text-foreground-muted">
-                                            {result.type === 'note' ? result.data.preview : result.data.description}
+                                            {result.type === 'note' ? result.data.preview :
+                                                result.type === 'command' ? result.data.description :
+                                                    result.data.description}
                                         </div>
                                     </div>
 
@@ -211,6 +253,6 @@ export function SearchModal() {
                     </span>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

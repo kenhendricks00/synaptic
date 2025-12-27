@@ -58,7 +58,30 @@ export const useVaultStore = create<VaultState>()(
             addNote: (note) => {
                 const notes = new Map(get().notes);
                 notes.set(note.id, note);
-                set({ notes });
+
+                // Also update metadata if it's new
+                const metadata = [...get().noteMetadata];
+                const existingIndex = metadata.findIndex(m => m.id === note.id);
+
+                // Extract preview for metadata
+                const preview = note.content.substring(0, 200).replace(/[#*`]/g, '');
+
+                const newMeta: NoteMetadata = {
+                    id: note.id,
+                    title: note.title,
+                    path: note.path,
+                    updatedAt: note.updatedAt,
+                    preview,
+                    tags: note.tags,
+                };
+
+                if (existingIndex >= 0) {
+                    metadata[existingIndex] = newMeta;
+                } else {
+                    metadata.push(newMeta);
+                }
+
+                set({ notes, noteMetadata: metadata });
             },
 
             updateNote: (noteId, updates) => {

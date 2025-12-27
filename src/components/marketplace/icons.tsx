@@ -20,7 +20,9 @@ import {
     Utensils,
     Rss,
     Cake,
-    Terminal
+    Terminal,
+    Globe,
+    Mic
 } from 'lucide-react';
 import { cn } from '../../lib';
 import type { PluginManifest } from '../../plugins/types';
@@ -54,6 +56,8 @@ export const getPluginIcon = (plugin: PluginManifest) => {
         'github': { icon: Github, color: 'text-gray-400' },
         'wand': { icon: Wand2, color: 'text-purple-400' },
         'terminal': { icon: Terminal, color: 'text-blue-400' },
+        'globe': { icon: Globe, color: 'text-blue-500' },
+        'mic': { icon: Mic, color: 'text-red-500' },
 
         // Emojis (for backward compatibility / stuck state)
         '🧠': { icon: Brain, color: 'text-purple-400' },

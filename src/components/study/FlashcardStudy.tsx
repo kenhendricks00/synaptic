@@ -6,7 +6,6 @@ import {
     ThumbsDown,
     Zap,
     CheckCircle2,
-    ArrowRight,
     Flame
 } from 'lucide-react';
 import { useVaultStore } from '../../stores';

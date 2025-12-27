@@ -1,11 +1,5 @@
 import type { Plugin } from '../../types';
 
-interface KanbanCard {
-    id: string;
-    title: string;
-    column: string;
-}
-
 export class KanbanPlugin implements Plugin {
     id = 'kanban-board';
     name = 'Kanban Board';

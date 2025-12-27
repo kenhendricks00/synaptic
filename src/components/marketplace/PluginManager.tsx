@@ -2,8 +2,7 @@ import {
     Power,
     PowerOff,
     Trash2,
-    Settings,
-    AlertCircle
+    Settings
 } from 'lucide-react';
 import { usePluginStore } from '../../plugins';
 import { cn } from '../../lib';

@@ -6,6 +6,6 @@ export { ChatInterface } from './ai';
 export { Marketplace, PluginManager } from './marketplace';
 export { GraphView } from './graph';
 export { WelcomeScreen } from './WelcomeScreen';
-export { Onboarding } from './onboarding';
+export { Onboarding } from './Onboarding';
 export { Settings } from './Settings';
 export { FlashcardStudy } from './study';

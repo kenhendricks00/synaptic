@@ -4,9 +4,49 @@ import type { PluginManifest } from './types';
  * Plugin registry - all available plugins
  * In production, this would be fetched from a remote marketplace API
  */
+const REGISTRY_URL = 'https://raw.githubusercontent.com/kenhendricks00/Synaptic/main/plugins.json';
+
+/**
+ * Plugin registry - all available plugins
+ * Fetches from remote GitHub registry and merges with built-ins
+ */
 export async function getAvailablePlugins(): Promise<PluginManifest[]> {
-  // For now, return built-in plugins
-  // In production: fetch from https://api.synaptic.app/plugins
+  try {
+    // 1. Fetch Remote Registry
+    const response = await fetch(REGISTRY_URL);
+    if (!response.ok) throw new Error('Failed to fetch registry');
+    const remotePlugins: PluginManifest[] = await response.json();
+
+    // 2. Parse dates (JSON dates are strings)
+    const remoteParsed = remotePlugins.map(p => ({
+      ...p,
+      lastUpdated: new Date(p.lastUpdated)
+    }));
+
+    // 3. Get Built-ins
+    const builtIns = getBuiltInPlugins();
+
+    // 4. Merge: Remote overrides built-in if ID matches (allows updating built-ins via remote)
+    // Actually, for safety/simplicity in this stage, let's just Append remote ones that aren't built-in,
+    // OR allow remote to be the source of truth if we want dynamic updates.
+    // Strategy: Use a Map, remote wins.
+    const pluginMap = new Map<string, PluginManifest>();
+
+    // Add built-ins first
+    builtIns.forEach(p => pluginMap.set(p.id, p));
+
+    // Add/Update with remote
+    remoteParsed.forEach(p => pluginMap.set(p.id, p));
+
+    return Array.from(pluginMap.values());
+
+  } catch (e) {
+    console.warn('Failed to fetch remote registry, falling back to built-ins:', e);
+    return getBuiltInPlugins();
+  }
+}
+
+function getBuiltInPlugins(): PluginManifest[] {
   return [
     {
       id: 'spaced-repetition',
@@ -433,6 +473,98 @@ export async function getAvailablePlugins(): Promise<PluginManifest[]> {
       permissions: ['write_notes', 'storage'],
       minAppVersion: '1.0.0',
     },
+    {
+      id: 'google-drive-backup',
+      name: 'Google Drive Backup',
+      version: '1.0.0',
+      description: 'Backup your vault to Google Drive as a Zip or Sync files.',
+      author: 'Synaptic Team',
+      icon: 'cloud',
+      category: 'integration',
+      tags: ['backup', 'google-drive', 'cloud', 'sync'],
+      screenshots: [],
+      downloads: 100,
+      rating: 5.0,
+      lastUpdated: new Date('2025-12-27'),
+      isOfficial: true,
+      permissions: ['read_notes', 'write_notes', 'read_vault', 'write_vault', 'network'],
+      minAppVersion: '1.0.0',
+      settingsSchema: [
+        {
+          key: 'accessToken',
+          type: 'textarea',
+          label: 'Google Access Token',
+          description: 'Get a token from OAuth Playground (https://developers.google.com/oauthplayground)',
+          default: '',
+        },
+        {
+          key: 'mode',
+          type: 'select',
+          label: 'Operation Mode',
+          description: 'Choose between full Backup (Zip) or Sync (File Mirror)',
+          default: 'backup',
+          options: [
+            { value: 'backup', label: 'Backup (Zip Snapshot)' },
+            { value: 'sync', label: 'Sync (Manual Push/Pull)' },
+          ],
+        },
+        {
+          key: 'backupFrequency',
+          type: 'select',
+          label: 'Backup Frequency',
+          description: 'How often to remind you to backup',
+          default: 'manual',
+          options: [
+            { value: 'manual', label: 'Manual Only' },
+            { value: 'daily', label: 'Daily' },
+            { value: 'weekly', label: 'Weekly' },
+          ],
+        },
+      ]
+    },
+    {
+      id: 'weather',
+      name: 'Weather',
+      version: '1.0.0',
+      description: 'Display current weather in status bar using Open-Meteo.',
+      author: 'Synaptic Team',
+      icon: 'sun',
+      category: 'utility',
+      tags: ['weather', 'forecast', 'status-bar'],
+      downloads: 42,
+      rating: 4.9,
+      lastUpdated: new Date('2025-12-27'),
+      isOfficial: true,
+      permissions: ['network', 'ui'],
+      minAppVersion: '1.0.0',
+      settingsSchema: [
+        {
+          key: 'zipCode',
+          type: 'text',
+          label: 'Zip / Postal Code',
+          description: 'e.g. 10001',
+          default: '10001',
+        },
+        {
+          key: 'countryCode',
+          type: 'text',
+          label: 'Country Code',
+          description: '2-letter code (e.g. US, UK, DE)',
+          default: 'US',
+        },
+        {
+          key: 'unit',
+          type: 'select',
+          label: 'Temperature Unit',
+          description: 'Celsius or Fahrenheit',
+          default: 'fahrenheit',
+          options: [
+            { value: 'celsius', label: 'Celsius (°C)' },
+            { value: 'fahrenheit', label: 'Fahrenheit (°F)' },
+          ],
+        },
+      ]
+    }
   ];
 }
 

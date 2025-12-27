@@ -9,3 +9,4 @@ export { WelcomeScreen } from './WelcomeScreen';
 export { Onboarding } from './Onboarding';
 export { Settings } from './Settings';
 export { FlashcardStudy } from './study';
+export { WeatherWidget } from './WeatherWidget';

@@ -114,6 +114,10 @@ export interface PluginManifest {
   minAppVersion: string;
   maxAppVersion?: string;
   settingsSchema?: PluginSettingDefinition[];
+
+  // Dynamic Loading
+  downloadUrl?: string;
+  hash?: string;
 }
 
 /**

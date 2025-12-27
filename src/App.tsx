@@ -15,7 +15,8 @@ import {
   Onboarding,
   Settings,
   CreateNoteModal,
-  FlashcardStudy
+  FlashcardStudy,
+  WeatherWidget
 } from './components';
 import { FileText, Clock, Save } from 'lucide-react';
 import { formatDate, loadNote, loadVault, loadNotesMetadata } from './lib';
@@ -222,7 +223,7 @@ function App() {
             </span>
           </div>
 
-          <div className="flex items-center gap-4 text-xs text-foreground-muted">
+          <div id="main-header-right" className="flex items-center gap-4 text-xs text-foreground-muted">
             {(currentView === 'editor' || currentView === 'daily') && (
               <>
                 {hasUnsavedChanges ? (
@@ -269,6 +270,15 @@ function App() {
               </>
             )}
             <div className="w-px h-3 bg-border mx-1" />
+
+            {/* Weather Widget */}
+            {installed.get('weather')?.enabled && (
+              <>
+                <WeatherWidget />
+                <div className="w-px h-3 bg-border mx-1" />
+              </>
+            )}
+
             <span className="flex items-center gap-1.5">
               <Clock className="w-3.5 h-3.5" />
               {formatDate(new Date())}

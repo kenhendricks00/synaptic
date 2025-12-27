@@ -32,15 +32,53 @@ export const usePluginStore = create<PluginStore>()(
         set({ isLoading: true, error: null });
 
         try {
+          let pluginToRegister = plugin;
+
+          // DYNAMIC LOADER: If no plugin instance is provided but we have a download Url
+          // (This happens when clicking Install on a remote plugin)
+          if (!plugin && manifest.downloadUrl) {
+            console.log(`[Store] Downloading plugin ${manifest.id} from ${manifest.downloadUrl}`);
+
+            const response = await fetch(manifest.downloadUrl);
+            if (!response.ok) throw new Error(`Failed to download plugin: ${response.statusText}`);
+
+            const code = await response.text();
+
+            // Load it!
+            const { loadExternalPlugin } = await import('./loader');
+            pluginToRegister = await loadExternalPlugin(manifest.id, code);
+
+            // Persistence: Save 'code' to disk
+            try {
+              const { writeTextFile, BaseDirectory, exists, mkdir } = await import('@tauri-apps/plugin-fs');
+              const pluginDir = 'plugins';
+
+              // Ensure plugins dir exists
+              if (!await exists(pluginDir, { baseDir: BaseDirectory.AppConfig })) {
+                await mkdir(pluginDir, { baseDir: BaseDirectory.AppConfig, recursive: true });
+              }
+
+              const fileName = `${pluginDir}/${manifest.id}.js`;
+              await writeTextFile(fileName, code, { baseDir: BaseDirectory.AppConfig });
+              console.log(`[Store] Saved plugin ${manifest.id} to ${fileName}`);
+            } catch (fsErr) {
+              console.error('[Store] Failed to persist plugin to disk:', fsErr);
+            }
+          }
+
+          if (!pluginToRegister) {
+            throw new Error("No plugin code provided and no download URL found.");
+          }
+
           // Register with plugin manager
-          pluginManager.register(plugin);
+          pluginManager.register(pluginToRegister);
 
           // Add to installed
           const { installed } = get();
           const newInstalled = new Map(installed);
           newInstalled.set(manifest.id, {
             manifest,
-            plugin,
+            plugin: pluginToRegister,
             enabled: false,
             installedAt: new Date(),
           });
@@ -57,6 +95,7 @@ export const usePluginStore = create<PluginStore>()(
             set({ installed: updated });
           }
         } catch (error) {
+          console.error("Install failed:", error);
           set({
             isLoading: false,
             error: error instanceof Error ? error.message : 'Failed to install plugin',
@@ -212,9 +251,34 @@ export const usePluginStore = create<PluginStore>()(
             for (const [id, installedPlugin] of entries) {
               try {
                 // Try to re-import the plugin class
-                const module = await import(`./built-in/${id}/index`).catch(() => null);
-                if (module && module.default) {
-                  const pluginInstance = new module.default();
+                let pluginInstance = null;
+
+                // 1. Try Built-in
+                try {
+                  const module = await import(`./built-in/${id}/index`).catch(() => null);
+                  if (module && module.default) {
+                    pluginInstance = new module.default();
+                  }
+                } catch (e) { /* Not built-in */ }
+
+                // 2. Try External (Dynamic)
+                if (!pluginInstance) {
+                  try {
+                    const { readTextFile, BaseDirectory, exists } = await import('@tauri-apps/plugin-fs');
+                    const pluginPath = `plugins/${id}.js`;
+
+                    if (await exists(pluginPath, { baseDir: BaseDirectory.AppConfig })) {
+                      console.log(`[Store] Found external plugin on disk: ${id}`);
+                      const code = await readTextFile(pluginPath, { baseDir: BaseDirectory.AppConfig });
+                      const { loadExternalPlugin } = await import('./loader');
+                      pluginInstance = await loadExternalPlugin(id, code);
+                    }
+                  } catch (extErr) {
+                    console.warn(`[Store] Failed to load external plugin ${id} from disk:`, extErr);
+                  }
+                }
+
+                if (pluginInstance) {
                   // Update the plugin instance in the store
                   installedPlugin.plugin = pluginInstance;
 
@@ -225,7 +289,7 @@ export const usePluginStore = create<PluginStore>()(
                   }
                   console.log(`[PluginStore] Rehydrated plugin: ${id}`);
                 } else {
-                  console.warn(`[PluginStore] Could not find built-in plugin code for ${id}`);
+                  console.warn(`[PluginStore] Could not find plugin code for ${id}`);
                   // Fallback to what we have (though it might be broken)
                   if (installedPlugin.plugin) {
                     pluginManager.register(installedPlugin.plugin);

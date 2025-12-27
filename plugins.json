@@ -1,0 +1,112 @@
+[
+    {
+        "id": "spaced-repetition",
+        "name": "Spaced Repetition",
+        "version": "1.0.1",
+        "description": "Flashcard study system with SM-2 algorithm. Create flashcards in your notes and review them at optimal intervals for long-term retention.",
+        "author": "Synaptic Team",
+        "icon": "brain",
+        "category": "productivity",
+        "tags": [
+            "learning",
+            "flashcards",
+            "memorization",
+            "study",
+            "anki"
+        ],
+        "repository": "https://github.com/synaptic/spaced-repetition-plugin",
+        "downloads": 12500,
+        "rating": 4.8,
+        "lastUpdated": "2025-12-26T00:00:00.000Z",
+        "isOfficial": true,
+        "permissions": [
+            "read_notes",
+            "write_notes",
+            "storage"
+        ],
+        "minAppVersion": "0.1.0"
+    },
+    {
+        "id": "google-drive-backup",
+        "name": "Google Drive Backup",
+        "version": "1.0.0",
+        "description": "Backup your vault to Google Drive as a Zip or Sync files.",
+        "author": "Synaptic Team",
+        "icon": "cloud",
+        "category": "integration",
+        "tags": [
+            "backup",
+            "google-drive",
+            "cloud",
+            "sync"
+        ],
+        "downloads": 100,
+        "rating": 5.0,
+        "lastUpdated": "2025-12-27T00:00:00.000Z",
+        "isOfficial": true,
+        "permissions": [
+            "read_notes",
+            "write_notes",
+            "read_vault",
+            "write_vault",
+            "network"
+        ],
+        "minAppVersion": "1.0.0"
+    },
+    {
+        "id": "weather",
+        "name": "Weather",
+        "version": "1.0.1",
+        "description": "Display current weather in status bar using Open-Meteo.",
+        "author": "Synaptic Team",
+        "icon": "sun",
+        "category": "utility",
+        "tags": [
+            "weather",
+            "forecast",
+            "status-bar"
+        ],
+        "downloads": 50,
+        "rating": 4.9,
+        "lastUpdated": "2025-12-27T00:00:00.000Z",
+        "isOfficial": true,
+        "permissions": [
+            "network",
+            "ui"
+        ],
+        "minAppVersion": "1.0.0",
+        "settingsSchema": [
+            {
+                "key": "zipCode",
+                "type": "text",
+                "label": "Zip / Postal Code",
+                "description": "e.g. 10001",
+                "default": "10001"
+            },
+            {
+                "key": "countryCode",
+                "type": "text",
+                "label": "Country Code",
+                "description": "2-letter code (e.g. US, UK, DE)",
+                "default": "US"
+            },
+            {
+                "key": "unit",
+                "type": "select",
+                "label": "Temperature Unit",
+                "description": "Celsius or Fahrenheit",
+                "default": "fahrenheit",
+                "options": [
+                    {
+                        "value": "celsius",
+                        "label": "Celsius (°C)"
+                    },
+                    {
+                        "value": "fahrenheit",
+                        "label": "Fahrenheit (°F)"
+                    }
+                ]
+            }
+        ]
+    }
+]

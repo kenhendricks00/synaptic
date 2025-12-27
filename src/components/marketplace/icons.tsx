@@ -3,6 +3,8 @@ import {
     Palette,
     Timer,
     Zap,
+    Cloud,
+    Sun,
     Network as NetworkIcon,
     Layout,
     RefreshCw,
@@ -58,6 +60,8 @@ export const getPluginIcon = (plugin: PluginManifest) => {
         'terminal': { icon: Terminal, color: 'text-blue-400' },
         'globe': { icon: Globe, color: 'text-blue-500' },
         'mic': { icon: Mic, color: 'text-red-500' },
+        'cloud': { icon: Cloud, color: 'text-blue-500' },
+        'sun': { icon: Sun, color: 'text-yellow-500' },
 
         // Emojis (for backward compatibility / stuck state)
         '🧠': { icon: Brain, color: 'text-purple-400' },

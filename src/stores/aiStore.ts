@@ -84,7 +84,7 @@ export const useAIStore = create<AIStore>()(
             isListening: false,
             isSpeaking: false,
             preferMicMuted: false,
-            voiceId: '',
+            voiceId: 'af_heart',
             voiceRate: 1.0,
 
             setVoiceMode: (enabled) => set({ isVoiceMode: enabled, preferMicMuted: !enabled }),
@@ -695,8 +695,10 @@ ${note.content}`
             name: 'synaptic-ai-storage',
             partialize: (state) => ({
                 messages: state.messages,
-                selectedModel: state.selectedModel
-            }),
+                selectedModel: state.selectedModel,
+                voiceId: state.voiceId,
+                voiceRate: state.voiceRate
+            })
         }
     )
 );

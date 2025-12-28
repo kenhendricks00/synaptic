@@ -1,6 +1,6 @@
 [package]
 name = "synaptic"
-version = "0.1.0"
+version = "1.0.1"
 description = "A local-first, AI-powered personal knowledge base"
 authors = ["Kenneth"]
 edition = "2021"

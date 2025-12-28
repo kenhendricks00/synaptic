@@ -7,6 +7,12 @@ import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import Highlight from '@tiptap/extension-highlight';
 import Typography from '@tiptap/extension-typography';
+import Image from '@tiptap/extension-image';
+import Table from '@tiptap/extension-table';
+import TableRow from '@tiptap/extension-table-row';
+import TableHeader from '@tiptap/extension-table-header';
+import TableCell from '@tiptap/extension-table-cell';
+import TextAlign from '@tiptap/extension-text-align';
 import { useVaultStore, useUIStore, useSettingsStore, usePluginStore } from '../../stores';
 import { saveNote, countWords, debounce, markdownToHtml, htmlToMarkdown } from '../../lib';
 import BubbleMenu from '@tiptap/extension-bubble-menu';
@@ -20,7 +26,7 @@ interface NoteEditorProps {
 
 export function NoteEditor({ className }: NoteEditorProps) {
     const { notes, activeNoteId, updateNote, setActiveNote } = useVaultStore();
-    const { hasUnsavedChanges, setHasUnsavedChanges, setWordCount, setCharacterCount, setTypingSpeed } = useUIStore();
+    const { hasUnsavedChanges, setHasUnsavedChanges, setWordCount, setCharacterCount, setTypingSpeed, focusMode } = useUIStore();
     const { settings } = useSettingsStore();
     const { installed } = usePluginStore();
 
@@ -98,6 +104,24 @@ export function NoteEditor({ className }: NoteEditorProps) {
             Typography,
             BubbleMenu.configure({
                 pluginKey: 'bubbleMenu',
+            }),
+            Image.configure({
+                HTMLAttributes: {
+                    class: 'rounded-lg max-w-full h-auto my-4',
+                },
+            }),
+            Table.configure({
+                resizable: true,
+                HTMLAttributes: {
+                    class: 'border-collapse table-auto w-full',
+                },
+            }),
+            TableRow,
+            TableHeader,
+            TableCell,
+            TextAlign.configure({
+                types: ['heading', 'paragraph'],
+                alignments: ['left', 'center', 'right', 'justify'],
             }),
         ],
         content: activeNote ? markdownToHtml(activeNote.content) : '',
@@ -199,7 +223,7 @@ export function NoteEditor({ className }: NoteEditorProps) {
     return (
         <div className={`flex flex-col h-full ${className}`}>
             {/* Toolbar */}
-            <EditorToolbar editor={editor} />
+            {!focusMode && <EditorToolbar editor={editor} />}
 
             {/* Editor */}
             <div
@@ -215,7 +239,7 @@ export function NoteEditor({ className }: NoteEditorProps) {
                     <EditorContent editor={editor} />
 
                     {/* Backlinks Section */}
-                    {settings.corePlugins['backlinks'] !== false && backlinkNotes.length > 0 && (
+                    {!focusMode && settings.corePlugins['backlinks'] !== false && backlinkNotes.length > 0 && (
                         <div className="mt-16 pt-8 border-t border-border/50">
                             <div className="flex items-center gap-2 mb-4 text-foreground-muted">
                                 <LinkIcon className="w-4 h-4" />

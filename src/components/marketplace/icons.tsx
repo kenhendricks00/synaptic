@@ -24,7 +24,8 @@ import {
     Cake,
     Terminal,
     Globe,
-    Mic
+    Mic,
+    Maximize2
 } from 'lucide-react';
 import { cn } from '../../lib';
 import type { PluginManifest } from '../../plugins/types';
@@ -62,6 +63,7 @@ export const getPluginIcon = (plugin: PluginManifest) => {
         'mic': { icon: Mic, color: 'text-red-500' },
         'cloud': { icon: Cloud, color: 'text-blue-500' },
         'sun': { icon: Sun, color: 'text-yellow-500' },
+        'maximize-2': { icon: Maximize2, color: 'text-purple-500' },
 
         // Emojis (for backward compatibility / stuck state)
         '🧠': { icon: Brain, color: 'text-purple-400' },

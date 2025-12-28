@@ -233,6 +233,62 @@
   .text-balance {
     text-wrap: balance;
   }
+
+  /* Voice Mode Animations */
+  @keyframes mesh-gradient {
+    0% {
+      background-position: 0% 50%;
+    }
+
+    50% {
+      background-position: 100% 50%;
+    }
+
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  @keyframes pulse-subtle {
+
+    0%,
+    100% {
+      opacity: 0.4;
+      transform: scale(1);
+    }
+
+    50% {
+      opacity: 0.7;
+      transform: scale(1.02);
+    }
+  }
+
+  .animate-mesh {
+    background-size: 400% 400%;
+    animation: mesh-gradient 15s ease infinite;
+  }
+
+  .animate-mesh-fast {
+    background-size: 400% 400%;
+    animation: mesh-gradient 8s ease infinite;
+  }
+
+  .voice-glow {
+    @apply absolute inset-0 pointer-events-none z-0;
+    background: radial-gradient(circle at bottom,
+        rgba(139, 92, 246, 0.15) 0%,
+        rgba(236, 72, 153, 0.1) 25%,
+        rgba(59, 130, 246, 0.05) 50%,
+        transparent 100%);
+    filter: blur(60px);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+
+  .voice-glow-active {
+    opacity: 1;
+    animation: pulse-subtle 4s ease-in-out infinite;
+  }
 }
 
 /* Tiptap editor styles */
@@ -301,4 +357,35 @@
 
 .tiptap ul[data-type="taskList"] li input[type="checkbox"] {
   @apply mt-1 w-4 h-4 accent-accent;
+}
+
+/* Table styles */
+.tiptap table {
+  @apply border-collapse table-auto w-full my-4;
+}
+
+.tiptap table th,
+.tiptap table td {
+  @apply border border-border px-3 py-2 text-left;
+}
+
+.tiptap table th {
+  @apply bg-background-tertiary font-semibold text-foreground;
+}
+
+.tiptap table td {
+  @apply bg-background-secondary/50;
+}
+
+.tiptap table tr:hover td {
+  @apply bg-background-tertiary/50;
+}
+
+/* Image styles */
+.tiptap img {
+  @apply rounded-lg max-w-full h-auto my-4 border border-border;
+}
+
+.tiptap img.ProseMirror-selectednode {
+  @apply ring-2 ring-accent ring-offset-2 ring-offset-background;
 }

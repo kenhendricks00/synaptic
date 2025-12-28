@@ -108,5 +108,28 @@
                 ]
             }
         ]
+    },
+    {
+        "id": "focus-mode",
+        "name": "Focus Mode",
+        "version": "1.0.0",
+        "description": "Distraction-free writing. Hides sidebar and top bar.",
+        "author": "Synaptic Team",
+        "icon": "maximize-2",
+        "category": "productivity",
+        "tags": [
+            "focus",
+            "writing",
+            "distraction-free",
+            "ui"
+        ],
+        "downloads": 0,
+        "rating": 5.0,
+        "lastUpdated": "2025-12-27T00:00:00.000Z",
+        "isOfficial": true,
+        "permissions": [
+            "ui"
+        ],
+        "minAppVersion": "1.0.0"
     }
 ]

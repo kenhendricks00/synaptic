@@ -95,14 +95,7 @@ Synaptic is inspired by the incredible work of the open-source community:
 - **[Ollama](https://ollama.ai)** - Local LLM inference engine
 - **[Tauri](https://tauri.app)** - Lightweight desktop app framework
 - **[TipTap](https://tiptap.dev)** - Headless rich-text editor
-- **Plugin Inspirations**:
-    - Reading Time by [Supercip971](https://github.com/Supercip971/obsidian-reading-time)
-    - Typing Speed by [Supercip971](https://github.com/Supercip971/obsidian-typing-speed)
-    - Local RSS by [onikun94](https://github.com/onikun94/obsidian-local-rss)
-    - Birthday Tracker by [Raboro](https://github.com/Raboro/Obsidian-Birthday-Tracker-Plugin)
-    - Meal Plan by [tmayoff](https://github.com/tmayoff/obsidian-meals)
-    - Fantasy Name by [Lukewh](https://github.com/Lukewh/fantasy-name)
-    - GitHub Sync by [Kevin Chin](https://github.com/kevinmkchin/Obsidian-GitHub-Sync)
+- **[Kokoro TTS](https://huggingface.co/hexgrad/Kokoro-82M)** - High-quality local text-to-speech model
 
 # 📄 License
 MIT License - See [LICENSE](LICENSE) for details.

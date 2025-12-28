@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { FolderOpen, Sparkles, Shield, Zap, Settings } from 'lucide-react';
 import { selectVaultFolder, loadVault, loadNotesMetadata } from '../lib';
-import { useVaultStore, useUIStore } from '../stores';
+import { useVaultStore } from '../stores';
 import logo from '../assets/logo.png';
 
 export function WelcomeScreen() {
-    const { setCurrentVault, setNoteMetadata, setLoading, setError, autoLoadFolder, setAutoLoadFolder } = useVaultStore();
-    const { setCurrentView } = useUIStore();
+    const { setCurrentVault, setNoteMetadata, setLoading, setInitialized, setError, autoLoadFolder, setAutoLoadFolder } = useVaultStore();
     const [showSettings, setShowSettings] = useState(false);
 
     const handleOpenVault = async () => {
@@ -25,7 +24,10 @@ export function WelcomeScreen() {
 
             setCurrentVault(vault);
             setNoteMetadata(notes);
-            setCurrentView('editor');
+            setInitialized(true); // Mark that we finished loading metadata
+
+            // Refresh to ensure clean React state
+            window.location.reload();
         } catch (error) {
             console.error('Failed to open vault:', error);
             setError(error instanceof Error ? error.message : 'Failed to open vault');
@@ -161,7 +163,7 @@ export function WelcomeScreen() {
 
             {/* Footer */}
             <div className="absolute bottom-6 text-foreground-muted text-sm">
-                <span className="opacity-50">v0.1.0</span>
+                <span className="opacity-50">v1.0.1</span>
                 <span className="mx-2">·</span>
                 <span className="opacity-50">Built with Tauri + React</span>
             </div>

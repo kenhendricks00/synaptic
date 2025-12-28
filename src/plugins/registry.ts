@@ -564,6 +564,22 @@ function getBuiltInPlugins(): PluginManifest[] {
           ],
         },
       ]
+    },
+    {
+      id: 'focus-mode',
+      name: 'Focus Mode',
+      version: '1.0.0',
+      description: 'Distraction-free writing. Hides sidebar and top bar.',
+      author: 'Synaptic Team',
+      icon: 'maximize-2',
+      category: 'productivity',
+      tags: ['focus', 'writing', 'distraction-free', 'ui'],
+      downloads: 0,
+      rating: 5.0,
+      lastUpdated: new Date('2025-12-27'),
+      isOfficial: true,
+      permissions: ['ui'],
+      minAppVersion: '1.0.0',
     }
   ];
 }

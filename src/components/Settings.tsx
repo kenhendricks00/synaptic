@@ -192,9 +192,13 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void 
     );
 }
 
+// Module-level flag to prevent double factory reset (survives React Strict Mode)
+let factoryResetInProgress = false;
+
 function GeneralSettings() {
     const { currentVault, setCurrentVault, setNoteMetadata } = useVaultStore();
     const { updateSettings } = useSettingsStore();
+    const [isResetting, setIsResetting] = useState(false);
 
     const handleChangeVault = async () => {
         const { open } = await import('@tauri-apps/plugin-dialog');
@@ -218,23 +222,22 @@ function GeneralSettings() {
     };
 
     const handleFactoryReset = async () => {
-        const confirmed = window.confirm(
-            "⚠️ FACTORY RESET\n\nThis will:\n1. Disconnect your current vault (files are safe on disk)\n2. Uninstall all plugins\n3. Reset all app settings to defaults\n\nAre you sure you want to proceed?"
-        );
+        // Prevent double execution
+        if (factoryResetInProgress) return;
+        factoryResetInProgress = true;
+        setIsResetting(true);
 
-        if (confirmed) {
-            // 1. Reset Plugins
-            await usePluginStore.getState().reset();
+        // 1. Reset Plugins
+        await usePluginStore.getState().reset();
 
-            // 2. Reset Vault
-            useVaultStore.getState().reset();
+        // 2. Reset Vault
+        useVaultStore.getState().reset();
 
-            // 3. Reset Settings
-            useSettingsStore.getState().resetSettings();
+        // 3. Reset Settings
+        useSettingsStore.getState().resetSettings();
 
-            // 4. Force reload to ensure clean state and trigger onboarding
-            window.location.reload();
-        }
+        // 4. Force reload to ensure clean state and trigger onboarding
+        window.location.reload();
     };
 
     return (
@@ -285,10 +288,11 @@ function GeneralSettings() {
                         </div>
                         <button
                             onClick={handleFactoryReset}
-                            className="flex items-center gap-2 px-4 py-2 bg-error hover:bg-error/90 text-white rounded-lg text-sm font-medium transition-colors shadow-sm"
+                            disabled={isResetting}
+                            className="flex items-center gap-2 px-4 py-2 bg-error hover:bg-error/90 text-white rounded-lg text-sm font-medium transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            <RefreshCw className="w-4 h-4" />
-                            Factory Reset
+                            <RefreshCw className={`w-4 h-4 ${isResetting ? 'animate-spin' : ''}`} />
+                            {isResetting ? 'Resetting...' : 'Factory Reset'}
                         </button>
                     </div>
                 </div>
@@ -519,7 +523,7 @@ function ToggleSetting({ label, description, checked, onChange }: { label: strin
     );
 }
 
-const APP_VERSION = '0.1.0';
+const APP_VERSION = '1.0.1';
 const GITHUB_REPO = 'kenhendricks00/synaptic';
 
 function AboutSettings() {

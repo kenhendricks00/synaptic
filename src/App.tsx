@@ -31,11 +31,13 @@ function App() {
     notes,
     addNote,
     isLoading,
+    isInitialized,
+    setInitialized,
     error,
     autoLoadFolder
   } = useVaultStore();
 
-  const { currentView, hasUnsavedChanges, wordCount, typingSpeed, pomodoroStatus } = useUIStore();
+  const { currentView, hasUnsavedChanges, wordCount, typingSpeed, pomodoroStatus, focusMode, setFocusMode } = useUIStore();
   const { installed } = usePluginStore();
   const { settings, updateSettings } = useSettingsStore();
 
@@ -63,6 +65,8 @@ function App() {
   // Mark onboarding as complete
   const handleOnboardingComplete = () => {
     updateSettings({ onboardingCompleted: true });
+    // Refresh for clean React state
+    window.location.reload();
   };
 
   // Show onboarding if not explicitly completed (handles undefined for existing users)
@@ -74,8 +78,8 @@ function App() {
       // Use autoLoadFolder if set, otherwise fallback to the persisted currentVault path
       const pathToLoad = autoLoadFolder || currentVault?.path;
 
-      // Stop if no path, or if currently loading
-      if (!pathToLoad || isLoading) return;
+      // Stop if no path, or if currently loading, or already initialized
+      if (!pathToLoad || isLoading || isInitialized) return;
 
       // Only sync if metadata is empty (initial launch or vault switch)
       if (noteMetadata.length === 0) {
@@ -86,14 +90,19 @@ function App() {
 
           setCurrentVault(vault);
           setNoteMetadata(metadata);
+          setInitialized(true); // Mark as initialized
         } catch (error) {
           console.error('[App] Auto-sync failed:', error);
+          setInitialized(true); // Mark as initialized even on error to prevent infinite loop
         }
+      } else {
+        // Metadata already loaded (from WelcomeScreen), just mark as initialized
+        setInitialized(true);
       }
     };
 
     autoLoad();
-  }, [autoLoadFolder, currentVault?.path, noteMetadata.length, isLoading, setCurrentVault, setNoteMetadata]);
+  }, [autoLoadFolder, currentVault?.path, noteMetadata.length, isLoading, isInitialized, setCurrentVault, setNoteMetadata, setInitialized]);
 
   // Load active note content when it changes
   useEffect(() => {
@@ -120,46 +129,23 @@ function App() {
     loadActiveNote();
   }, [activeNoteId, currentVault, notes, addNote]);
 
-  // Show welcome screen if no vault is open
-  if (!currentVault && !isLoading) {
-    return <WelcomeScreen />;
-  }
-
-  // Loading state
-  if (isLoading && noteMetadata.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-          <span className="text-foreground-secondary">Loading vault...</span>
-        </div>
-      </div>
-    );
-  }
-
-  // Error state
-  if (error && noteMetadata.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-background">
-        <div className="text-center">
-          <p className="text-error mb-2">Error loading vault</p>
-          <p className="text-foreground-muted text-sm">{error}</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Keyboard Shortcuts
+  // Keyboard Shortcuts - must be before any early returns!
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if input/textarea is focused (except for navigation commands which usually supersede text entry?)
-      // Actually sidebar Nav items work globally usually, but let's be safe.
-      // If user typing in editor, usually Ctrl+1 still switches tab.
-      // So we generally allow it unless strictly colliding.
-
       const isCmdOrCtrl = e.metaKey || e.ctrlKey;
-
       if (!isCmdOrCtrl) return;
+
+      // Toggle Focus Mode (Cmd+Shift+F)
+      if (e.code === 'KeyF' && e.shiftKey) {
+        e.preventDefault();
+        useUIStore.getState().setFocusMode(!useUIStore.getState().focusMode);
+      }
+
+      // Toggle Sidebar (Cmd+\)
+      if (e.code === 'Backslash' && !e.shiftKey) {
+        e.preventDefault();
+        useUIStore.getState().toggleSidebar();
+      }
 
       switch (e.key) {
         case '1':
@@ -197,94 +183,144 @@ function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [settings.corePlugins]);
+
+  // Debug: Log current render state
+  console.log('[App Render]', {
+    currentVault: !!currentVault,
+    isLoading,
+    isInitialized,
+    noteMetadataCount: noteMetadata.length,
+    error,
+    shouldShowOnboarding
+  });
+
+  // Show onboarding first if not completed (takes priority over WelcomeScreen)
+  if (shouldShowOnboarding) {
+    console.log('[App] → Showing Onboarding');
+    return <Onboarding onComplete={handleOnboardingComplete} />;
+  }
+
+  // Show welcome screen if no vault is open (only after onboarding is done)
+  if (!currentVault && !isLoading) {
+    console.log('[App] → Showing WelcomeScreen');
+    return <WelcomeScreen />;
+  }
+
+  // Loading state
+  if (isLoading) {
+    console.log('[App] → Showing Loading (isLoading=true)');
+    return (
+      <div className="flex items-center justify-center h-screen bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+          <span className="text-foreground-secondary">Loading vault...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error && noteMetadata.length === 0) {
+    console.log('[App] → Showing Error');
+    return (
+      <div className="flex items-center justify-center h-screen bg-background">
+        <div className="text-center">
+          <p className="text-error mb-2">Error loading vault</p>
+          <p className="text-foreground-muted text-sm">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  console.log('[App] → Showing Main App');
 
   return (
     <div className="flex h-screen bg-background overflow-hidden relative">
-      {shouldShowOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
-
       {/* Sidebar */}
-      <Sidebar />
+      {!focusMode && <Sidebar />}
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Top Bar */}
-        <header className="flex items-center justify-between px-4 py-2 border-b border-border bg-background-secondary/50">
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-foreground-secondary py-1 px-2.5 bg-background-tertiary rounded-md font-medium">
-              {currentView === 'editor' && 'Notes'}
-              {currentView === 'daily' && 'Daily Notes'}
-              {currentView === 'graph' && 'Knowledge Graph'}
-              {currentView === 'search' && 'Search Results'}
-              {currentView === 'settings' && 'App Settings'}
-              {currentView === 'plugins' && 'Plugin Manager'}
-              {currentView === 'marketplace' && 'Plugin Marketplace'}
-              {currentView === 'study' && 'Flashcard Study'}
-            </span>
-          </div>
+        {!focusMode && (
+          <header className="flex items-center justify-between px-4 py-2 border-b border-border bg-background-secondary/50">
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-foreground-secondary py-1 px-2.5 bg-background-tertiary rounded-md font-medium">
+                {currentView === 'editor' && 'Notes'}
+                {currentView === 'daily' && 'Daily Notes'}
+                {currentView === 'graph' && 'Knowledge Graph'}
+                {currentView === 'search' && 'Search Results'}
+                {currentView === 'settings' && 'App Settings'}
+                {currentView === 'plugins' && 'Plugin Manager'}
+                {currentView === 'marketplace' && 'Plugin Marketplace'}
+                {currentView === 'study' && 'Flashcard Study'}
+              </span>
+            </div>
 
-          <div id="main-header-right" className="flex items-center gap-4 text-xs text-foreground-muted">
-            {(currentView === 'editor' || currentView === 'daily') && (
-              <>
-                {hasUnsavedChanges ? (
-                  <span className="flex items-center gap-1.5 text-warning font-medium">
-                    <span className="w-1.5 h-1.5 rounded-full bg-warning animate-pulse" />
-                    Unsaved Changes
+            <div id="main-header-right" className="flex items-center gap-4 text-xs text-foreground-muted">
+              {(currentView === 'editor' || currentView === 'daily') && (
+                <>
+                  {hasUnsavedChanges ? (
+                    <span className="flex items-center gap-1.5 text-warning font-medium">
+                      <span className="w-1.5 h-1.5 rounded-full bg-warning animate-pulse" />
+                      Unsaved Changes
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1.5 text-green-500 font-medium opacity-80">
+                      <Save className="w-3.5 h-3.5" />
+                      All Changes Saved
+                    </span>
+                  )}
+                  <div className="w-px h-3 bg-border mx-1" />
+                  <span className="flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5" />
+                    {wordCount} words
                   </span>
-                ) : (
-                  <span className="flex items-center gap-1.5 text-green-500 font-medium opacity-80">
-                    <Save className="w-3.5 h-3.5" />
-                    All Changes Saved
-                  </span>
-                )}
-                <div className="w-px h-3 bg-border mx-1" />
-                <span className="flex items-center gap-1.5">
-                  <FileText className="w-3.5 h-3.5" />
-                  {wordCount} words
-                </span>
-                {installed.get('reading-time')?.enabled && (
-                  <>
-                    <div className="w-px h-3 bg-border mx-1" />
-                    <span className="flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5" />
-                      {Math.ceil(wordCount / 200)} min read
-                    </span>
-                  </>
-                )}
-                {installed.get('typing-speed')?.enabled && (
-                  <>
-                    <div className="w-px h-3 bg-border mx-1" />
-                    <span className="flex items-center gap-1.5">
-                      {typingSpeed} WPM
-                    </span>
-                  </>
-                )}
-                {installed.get('pomodoro-timer')?.enabled && pomodoroStatus && (
-                  <>
-                    <div className="w-px h-3 bg-border mx-1" />
-                    <span className="flex items-center gap-1.5 text-accent font-medium">
-                      {pomodoroStatus}
-                    </span>
-                  </>
-                )}
-              </>
-            )}
-            <div className="w-px h-3 bg-border mx-1" />
+                  {installed.get('reading-time')?.enabled && (
+                    <>
+                      <div className="w-px h-3 bg-border mx-1" />
+                      <span className="flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5" />
+                        {Math.ceil(wordCount / 200)} min read
+                      </span>
+                    </>
+                  )}
+                  {installed.get('typing-speed')?.enabled && (
+                    <>
+                      <div className="w-px h-3 bg-border mx-1" />
+                      <span className="flex items-center gap-1.5">
+                        {typingSpeed} WPM
+                      </span>
+                    </>
+                  )}
+                  {installed.get('pomodoro-timer')?.enabled && pomodoroStatus && (
+                    <>
+                      <div className="w-px h-3 bg-border mx-1" />
+                      <span className="flex items-center gap-1.5 text-accent font-medium">
+                        {pomodoroStatus}
+                      </span>
+                    </>
+                  )}
+                </>
+              )}
+              <div className="w-px h-3 bg-border mx-1" />
 
-            {/* Weather Widget */}
-            {installed.get('weather')?.enabled && (
-              <>
-                <WeatherWidget />
-                <div className="w-px h-3 bg-border mx-1" />
-              </>
-            )}
+              {/* Weather Widget */}
+              {installed.get('weather')?.enabled && (
+                <>
+                  <WeatherWidget />
+                  <div className="w-px h-3 bg-border mx-1" />
+                </>
+              )}
 
-            <span className="flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5" />
-              {formatDate(new Date())}
-            </span>
-          </div>
-        </header>
+              <span className="flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5" />
+                {formatDate(new Date())}
+              </span>
+            </div>
+          </header>
+        )}
 
         {/* Content Area */}
         <div className="flex-1 overflow-hidden">
@@ -298,6 +334,20 @@ function App() {
           {currentView === 'study' && <FlashcardStudy />}
           {currentView === 'settings' && <Settings />}
         </div>
+
+        {/* Focus Mode Exit Button - Floating over content */}
+        {focusMode && (
+          <button
+            onClick={() => setFocusMode(false)}
+            className="absolute bottom-6 right-6 px-4 py-2 bg-background-tertiary/80 backdrop-blur border border-border rounded-full text-foreground-muted hover:text-foreground hover:border-accent/50 transition-all flex items-center gap-2 shadow-lg z-50 group"
+          >
+            <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+            <span className="text-sm font-medium">Focus Mode On</span>
+            <span className="text-[10px] uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity -ml-2 group-hover:ml-0">
+              (Click to Exit)
+            </span>
+          </button>
+        )}
       </main>
 
       {/* Search Modal */}

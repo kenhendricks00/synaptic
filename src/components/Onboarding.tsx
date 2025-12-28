@@ -51,7 +51,7 @@ const STEPS = [
 
 export function Onboarding({ onComplete }: OnboardingProps) {
     const [currentStep, setCurrentStep] = useState(0);
-    const { setCurrentVault, setNoteMetadata } = useVaultStore();
+    const { setCurrentVault, setNoteMetadata, setInitialized } = useVaultStore();
 
     const step = STEPS[currentStep];
     const isLastStep = currentStep === STEPS.length - 1;
@@ -88,6 +88,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 
             const notes = await loadNotesMetadata(selected);
             setNoteMetadata(notes);
+            setInitialized(true); // Mark as initialized
         }
     };
 

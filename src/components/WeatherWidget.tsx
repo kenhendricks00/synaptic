@@ -11,7 +11,7 @@ interface WeatherData {
 export function WeatherWidget() {
     const [data, setData] = useState<WeatherData | null>(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(false);
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
     // Get settings from store
     const { installed } = usePluginStore();
@@ -26,7 +26,7 @@ export function WeatherWidget() {
     const getCoordinates = async (zip: string, country: string) => {
         try {
             const res = await fetch(`https://api.zippopotam.us/${country}/${zip}`);
-            if (!res.ok) throw new Error('Invalid Zip Code');
+            if (!res.ok) throw new Error('Invalid Zip Code or Country');
             const json = await res.json();
             return {
                 lat: json.places[0].latitude,
@@ -41,7 +41,7 @@ export function WeatherWidget() {
     const fetchWeather = async () => {
         try {
             setLoading(true);
-            setError(false);
+            setErrorMsg(null);
 
             // 1. Geocode
             const { lat, lon } = await getCoordinates(zipCode, countryCode);
@@ -59,7 +59,7 @@ export function WeatherWidget() {
             });
         } catch (e) {
             console.error(e);
-            setError(true);
+            setErrorMsg(e instanceof Error ? e.message : 'Unknown Error');
         } finally {
             setLoading(false);
         }
@@ -72,8 +72,8 @@ export function WeatherWidget() {
         return () => clearInterval(interval);
     }, [zipCode, countryCode, unit, weatherPlugin?.enabled]); // Re-fetch when settings change
 
-    if (error) return (
-        <div className="flex items-center gap-1 text-xs text-red-400" title="Failed to load weather. Check Zip Code.">
+    if (errorMsg) return (
+        <div className="flex items-center gap-1 text-xs text-red-400 cursor-help" title={`Error: ${errorMsg}. Check settings.`}>
             <AlertCircle className="w-3.5 h-3.5" />
             <span>Error</span>
         </div>

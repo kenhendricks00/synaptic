@@ -17,6 +17,7 @@ interface UIState {
     characterCount: number;
     typingSpeed: number; // WPM
     pomodoroStatus: string | null;
+    focusMode: boolean;
 
     // Actions
     setCurrentView: (view: View) => void;
@@ -30,6 +31,7 @@ interface UIState {
     setCharacterCount: (count: number) => void;
     setTypingSpeed: (wpm: number) => void;
     setPomodoroStatus: (status: string | null) => void;
+    setFocusMode: (enabled: boolean) => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -47,6 +49,7 @@ export const useUIStore = create<UIState>()(
             characterCount: 0,
             typingSpeed: 0,
             pomodoroStatus: null,
+            focusMode: false,
 
             // Actions
             setCurrentView: (view) => set({ currentView: view }),
@@ -60,6 +63,7 @@ export const useUIStore = create<UIState>()(
             setCharacterCount: (count) => set({ characterCount: count }),
             setTypingSpeed: (wpm) => set({ typingSpeed: wpm }),
             setPomodoroStatus: (status) => set({ pomodoroStatus: status }),
+            setFocusMode: (enabled) => set({ focusMode: enabled }),
         }),
         {
             name: 'synaptic-ui-storage',

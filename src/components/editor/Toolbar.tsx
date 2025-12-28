@@ -16,6 +16,13 @@ import {
     Undo,
     Redo,
     Minus,
+    Image,
+    Braces,
+    Table,
+    AlignLeft,
+    AlignCenter,
+    AlignRight,
+    AlignJustify,
 } from 'lucide-react';
 import { cn } from '../../lib';
 import { AIActions } from './AIActions';
@@ -67,144 +74,207 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
     }
 
     return (
-        <div className="flex items-center gap-0.5 p-2 border-b border-border bg-background-secondary/50 overflow-x-auto scrollbar-hide">
-            {/* Headings */}
-            <ToolbarButton
-                onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-                isActive={editor.isActive('heading', { level: 1 })}
-                title="Heading 1"
-            >
-                <Heading1 className="w-4 h-4" />
-            </ToolbarButton>
-            <ToolbarButton
-                onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-                isActive={editor.isActive('heading', { level: 2 })}
-                title="Heading 2"
-            >
-                <Heading2 className="w-4 h-4" />
-            </ToolbarButton>
-            <ToolbarButton
-                onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-                isActive={editor.isActive('heading', { level: 3 })}
-                title="Heading 3"
-            >
-                <Heading3 className="w-4 h-4" />
-            </ToolbarButton>
+        <div className="flex items-center p-2 border-b border-border bg-background-secondary/50 gap-2">
+            {/* Scrollable Section: Formatting Tools */}
+            <div className="flex-1 flex items-center gap-0.5 overflow-x-auto scrollbar-hide pr-2">
+                {/* Headings */}
+                <ToolbarButton
+                    onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+                    isActive={editor.isActive('heading', { level: 1 })}
+                    title="Heading 1"
+                >
+                    <Heading1 className="w-4 h-4" />
+                </ToolbarButton>
+                <ToolbarButton
+                    onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+                    isActive={editor.isActive('heading', { level: 2 })}
+                    title="Heading 2"
+                >
+                    <Heading2 className="w-4 h-4" />
+                </ToolbarButton>
+                <ToolbarButton
+                    onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+                    isActive={editor.isActive('heading', { level: 3 })}
+                    title="Heading 3"
+                >
+                    <Heading3 className="w-4 h-4" />
+                </ToolbarButton>
 
-            <ToolbarDivider />
+                <ToolbarDivider />
 
-            {/* Text formatting */}
-            <ToolbarButton
-                onClick={() => editor.chain().focus().toggleBold().run()}
-                isActive={editor.isActive('bold')}
-                title="Bold (⌘B)"
-            >
-                <Bold className="w-4 h-4" />
-            </ToolbarButton>
-            <ToolbarButton
-                onClick={() => editor.chain().focus().toggleItalic().run()}
-                isActive={editor.isActive('italic')}
-                title="Italic (⌘I)"
-            >
-                <Italic className="w-4 h-4" />
-            </ToolbarButton>
-            <ToolbarButton
-                onClick={() => editor.chain().focus().toggleStrike().run()}
-                isActive={editor.isActive('strike')}
-                title="Strikethrough"
-            >
-                <Strikethrough className="w-4 h-4" />
-            </ToolbarButton>
-            <ToolbarButton
-                onClick={() => editor.chain().focus().toggleCode().run()}
-                isActive={editor.isActive('code')}
-                title="Inline code"
-            >
-                <Code className="w-4 h-4" />
-            </ToolbarButton>
-            <ToolbarButton
-                onClick={() => editor.chain().focus().toggleHighlight().run()}
-                isActive={editor.isActive('highlight')}
-                title="Highlight"
-            >
-                <Highlighter className="w-4 h-4" />
-            </ToolbarButton>
+                {/* Text formatting */}
+                <ToolbarButton
+                    onClick={() => editor.chain().focus().toggleBold().run()}
+                    isActive={editor.isActive('bold')}
+                    title="Bold (⌘B)"
+                >
+                    <Bold className="w-4 h-4" />
+                </ToolbarButton>
+                <ToolbarButton
+                    onClick={() => editor.chain().focus().toggleItalic().run()}
+                    isActive={editor.isActive('italic')}
+                    title="Italic (⌘I)"
+                >
+                    <Italic className="w-4 h-4" />
+                </ToolbarButton>
+                <ToolbarButton
+                    onClick={() => editor.chain().focus().toggleStrike().run()}
+                    isActive={editor.isActive('strike')}
+                    title="Strikethrough"
+                >
+                    <Strikethrough className="w-4 h-4" />
+                </ToolbarButton>
+                <ToolbarButton
+                    onClick={() => editor.chain().focus().toggleCode().run()}
+                    isActive={editor.isActive('code')}
+                    title="Inline code"
+                >
+                    <Code className="w-4 h-4" />
+                </ToolbarButton>
+                <ToolbarButton
+                    onClick={() => editor.chain().focus().toggleHighlight().run()}
+                    isActive={editor.isActive('highlight')}
+                    title="Highlight"
+                >
+                    <Highlighter className="w-4 h-4" />
+                </ToolbarButton>
 
-            <ToolbarDivider />
+                <ToolbarDivider />
 
-            {/* Lists */}
-            <ToolbarButton
-                onClick={() => editor.chain().focus().toggleBulletList().run()}
-                isActive={editor.isActive('bulletList')}
-                title="Bullet list"
-            >
-                <List className="w-4 h-4" />
-            </ToolbarButton>
-            <ToolbarButton
-                onClick={() => editor.chain().focus().toggleOrderedList().run()}
-                isActive={editor.isActive('orderedList')}
-                title="Numbered list"
-            >
-                <ListOrdered className="w-4 h-4" />
-            </ToolbarButton>
-            <ToolbarButton
-                onClick={() => editor.chain().focus().toggleTaskList().run()}
-                isActive={editor.isActive('taskList')}
-                title="Task list"
-            >
-                <CheckSquare className="w-4 h-4" />
-            </ToolbarButton>
+                {/* Alignment */}
+                <ToolbarButton
+                    onClick={() => editor.chain().focus().setTextAlign('left').run()}
+                    isActive={editor.isActive({ textAlign: 'left' })}
+                    title="Align left"
+                >
+                    <AlignLeft className="w-4 h-4" />
+                </ToolbarButton>
+                <ToolbarButton
+                    onClick={() => editor.chain().focus().setTextAlign('center').run()}
+                    isActive={editor.isActive({ textAlign: 'center' })}
+                    title="Align center"
+                >
+                    <AlignCenter className="w-4 h-4" />
+                </ToolbarButton>
+                <ToolbarButton
+                    onClick={() => editor.chain().focus().setTextAlign('right').run()}
+                    isActive={editor.isActive({ textAlign: 'right' })}
+                    title="Align right"
+                >
+                    <AlignRight className="w-4 h-4" />
+                </ToolbarButton>
+                <ToolbarButton
+                    onClick={() => editor.chain().focus().setTextAlign('justify').run()}
+                    isActive={editor.isActive({ textAlign: 'justify' })}
+                    title="Justify"
+                >
+                    <AlignJustify className="w-4 h-4" />
+                </ToolbarButton>
 
-            <ToolbarDivider />
+                <ToolbarDivider />
 
-            {/* Block elements */}
-            <ToolbarButton
-                onClick={() => editor.chain().focus().toggleBlockquote().run()}
-                isActive={editor.isActive('blockquote')}
-                title="Quote"
-            >
-                <Quote className="w-4 h-4" />
-            </ToolbarButton>
-            <ToolbarButton
-                onClick={() => editor.chain().focus().setHorizontalRule().run()}
-                title="Horizontal rule"
-            >
-                <Minus className="w-4 h-4" />
-            </ToolbarButton>
-            <ToolbarButton
-                onClick={() => {
-                    const url = window.prompt('Enter URL');
-                    if (url) {
-                        editor.chain().focus().setLink({ href: url }).run();
-                    }
-                }}
-                isActive={editor.isActive('link')}
-                title="Add link"
-            >
-                <Link className="w-4 h-4" />
-            </ToolbarButton>
+                {/* Lists */}
+                <ToolbarButton
+                    onClick={() => editor.chain().focus().toggleBulletList().run()}
+                    isActive={editor.isActive('bulletList')}
+                    title="Bullet list"
+                >
+                    <List className="w-4 h-4" />
+                </ToolbarButton>
+                <ToolbarButton
+                    onClick={() => editor.chain().focus().toggleOrderedList().run()}
+                    isActive={editor.isActive('orderedList')}
+                    title="Numbered list"
+                >
+                    <ListOrdered className="w-4 h-4" />
+                </ToolbarButton>
+                <ToolbarButton
+                    onClick={() => editor.chain().focus().toggleTaskList().run()}
+                    isActive={editor.isActive('taskList')}
+                    title="Task list"
+                >
+                    <CheckSquare className="w-4 h-4" />
+                </ToolbarButton>
 
-            {/* Spacer */}
-            <div className="flex-1" />
+                <ToolbarDivider />
 
-            {/* AI Actions */}
-            <AIActions />
+                {/* Block elements */}
+                <ToolbarButton
+                    onClick={() => editor.chain().focus().toggleBlockquote().run()}
+                    isActive={editor.isActive('blockquote')}
+                    title="Quote"
+                >
+                    <Quote className="w-4 h-4" />
+                </ToolbarButton>
+                <ToolbarButton
+                    onClick={() => editor.chain().focus().setHorizontalRule().run()}
+                    title="Horizontal rule"
+                >
+                    <Minus className="w-4 h-4" />
+                </ToolbarButton>
+                <ToolbarButton
+                    onClick={() => {
+                        const url = window.prompt('Enter URL');
+                        if (url) {
+                            editor.chain().focus().setLink({ href: url }).run();
+                        }
+                    }}
+                    isActive={editor.isActive('link')}
+                    title="Add link"
+                >
+                    <Link className="w-4 h-4" />
+                </ToolbarButton>
 
-            {/* Undo/Redo */}
-            <ToolbarButton
-                onClick={() => editor.chain().focus().undo().run()}
-                disabled={!editor.can().undo()}
-                title="Undo (⌘Z)"
-            >
-                <Undo className="w-4 h-4" />
-            </ToolbarButton>
-            <ToolbarButton
-                onClick={() => editor.chain().focus().redo().run()}
-                disabled={!editor.can().redo()}
-                title="Redo (⌘⇧Z)"
-            >
-                <Redo className="w-4 h-4" />
-            </ToolbarButton>
+                <ToolbarDivider />
+
+                {/* Media & Advanced */}
+                <ToolbarButton
+                    onClick={() => {
+                        const url = window.prompt('Enter image URL (or paste after selecting from file)');
+                        if (url) {
+                            editor.chain().focus().setImage({ src: url }).run();
+                        }
+                    }}
+                    title="Insert image"
+                >
+                    <Image className="w-4 h-4" />
+                </ToolbarButton>
+                <ToolbarButton
+                    onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+                    isActive={editor.isActive('codeBlock')}
+                    title="Code block"
+                >
+                    <Braces className="w-4 h-4" />
+                </ToolbarButton>
+                <ToolbarButton
+                    onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
+                    title="Insert table"
+                >
+                    <Table className="w-4 h-4" />
+                </ToolbarButton>
+            </div>
+
+            {/* Pinned Static Section (No Overflow/Clipping) */}
+            <div className="flex items-center gap-0.5 flex-shrink-0 border-l border-border pl-2">
+                {/* AI Actions */}
+                <AIActions />
+
+                {/* Undo/Redo */}
+                <ToolbarButton
+                    onClick={() => editor.chain().focus().undo().run()}
+                    disabled={!editor.can().undo()}
+                    title="Undo (⌘Z)"
+                >
+                    <Undo className="w-4 h-4" />
+                </ToolbarButton>
+                <ToolbarButton
+                    onClick={() => editor.chain().focus().redo().run()}
+                    disabled={!editor.can().redo()}
+                    title="Redo (⌘⇧Z)"
+                >
+                    <Redo className="w-4 h-4" />
+                </ToolbarButton>
+            </div>
         </div>
     );
 }

@@ -10,6 +10,7 @@ interface VaultState {
     activeNoteId: string | null;
     recentNoteIds: string[];
     isLoading: boolean;
+    isInitialized: boolean; // True after vault metadata has loaded (even if empty)
     error: string | null;
     autoLoadFolder: string | null; // Folder path to auto-load on launch
 
@@ -23,6 +24,7 @@ interface VaultState {
     deleteNote: (noteId: string) => void;
     addRecentNote: (noteId: string) => void;
     setLoading: (isLoading: boolean) => void;
+    setInitialized: (isInitialized: boolean) => void;
     setError: (error: string | null) => void;
     setAutoLoadFolder: (folder: string | null) => void;
     reset: () => void;
@@ -38,6 +40,7 @@ export const useVaultStore = create<VaultState>()(
             activeNoteId: null,
             recentNoteIds: [],
             isLoading: false,
+            isInitialized: false,
             error: null,
             autoLoadFolder: null,
 
@@ -108,6 +111,8 @@ export const useVaultStore = create<VaultState>()(
 
             setLoading: (isLoading) => set({ isLoading }),
 
+            setInitialized: (isInitialized) => set({ isInitialized }),
+
             setError: (error) => set({ error }),
 
             setAutoLoadFolder: (folder) => set({ autoLoadFolder: folder }),
@@ -119,6 +124,7 @@ export const useVaultStore = create<VaultState>()(
                 activeNoteId: null,
                 recentNoteIds: [],
                 autoLoadFolder: null,
+                isInitialized: false,
                 error: null,
             }),
         }),

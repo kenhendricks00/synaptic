@@ -18,6 +18,7 @@ import {
     Volume2,
     VolumeX
 } from 'lucide-react';
+import { VoiceSettings } from './VoiceSettings';
 import { useAIStore } from '../../stores';
 import { cn } from '../../lib';
 import { VoiceService } from '../../lib/voice';
@@ -44,7 +45,8 @@ export function ChatInterface() {
         isListening,
         setListening,
         isSpeaking,
-        setSpeaking
+        setSpeaking,
+        setPreferMicMuted
     } = useAIStore();
 
     // const [input, setInput] = useState(''); // Moved to store to allow external control
@@ -84,9 +86,12 @@ export function ChatInterface() {
             textareaRef.current.style.height = 'auto';
         }
 
-        // Stop speech if user sends message
+        // Stop speech/listening if user sends message via text
         VoiceService.stopSpeaking();
+        VoiceService.stopListening();
         setSpeaking(false);
+        setListening(false);
+        setPreferMicMuted(true); // Don't auto-unmute after text response
 
         await sendMessage(msg);
     };
@@ -95,16 +100,41 @@ export function ChatInterface() {
         if (isListening) {
             VoiceService.stopListening();
             setListening(false);
+            // User manually muted
+            setPreferMicMuted(true);
         } else {
             // Stop TTS if running
             VoiceService.stopSpeaking();
             setSpeaking(false);
+            // User manually unmuted
+            setPreferMicMuted(false);
+
+            // Also enable Voice Mode if not already enabled (User wants to talk!)
+            if (!isVoiceMode) {
+                setVoiceMode(true);
+            }
+
+            // Track the current input to detect changes
+            let lastInput = '';
 
             const recognition = VoiceService.initRecognition(
-                (text) => setInput(text),
+                (text) => {
+                    setInput(text);
+                    lastInput = text;
+                },
                 () => {
-                    setListening(false);
-                    // Optionally auto-send if text is substantive
+                    // Auto-send if text is substantive
+                    const textToSend = lastInput || useAIStore.getState().input;
+                    if (textToSend && textToSend.trim().length >= 2) {
+                        sendMessage(textToSend);
+                        setInput('');
+                    }
+
+                    // In voice mode, keep visually "listening" since we'll restart after AI responds
+                    // UNLESS user manually muted (handled via state)
+                    if (!isVoiceMode) {
+                        setListening(false);
+                    }
                 },
                 (err) => {
                     console.error('Speech recognition error:', err);
@@ -186,7 +216,21 @@ export function ChatInterface() {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-y-0 right-0 w-[400px] bg-background border-l border-border shadow-2xl z-50 flex flex-col transition-transform duration-300 relative">
+        <div className="fixed inset-y-0 right-0 w-[450px] bg-background border-l border-border shadow-2xl z-50 flex flex-col transition-transform duration-300 relative overflow-hidden">
+            {/* Voice Mode Glow Backdrop */}
+            <div className={cn(
+                "voice-glow",
+                (isVoiceMode && (isListening || isSpeaking)) && "voice-glow-active"
+            )} />
+
+            {/* Speaking Mesh Gradient */}
+            <div className={cn(
+                "absolute inset-0 pointer-events-none transition-opacity duration-1000 z-0",
+                (isVoiceMode && isSpeaking) ? "opacity-20" : "opacity-0"
+            )}>
+                <div className="absolute inset-0 animate-mesh-fast bg-gradient-to-tr from-accent/30 via-purple-500/20 to-blue-500/10 blur-[100px]" />
+            </div>
+
             <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-gradient-to-b from-background-secondary/80 to-background/50 backdrop-blur-xl relative z-20">
                 <div className="flex items-center gap-3">
                     <div className="p-2 rounded-xl bg-gradient-to-br from-accent/20 to-accent/5 text-accent shadow-lg shadow-accent/10">
@@ -199,19 +243,19 @@ export function ChatInterface() {
                                 "w-1.5 h-1.5 rounded-full",
                                 isOllamaRunning ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" : "bg-red-500"
                             )} />
-                            <span className="text-xs text-foreground-muted font-medium">
-                                {isOllamaRunning ? 'Online' : 'Disconnected'}
+                            <span className="text-xs text-foreground-muted font-medium flex items-center gap-1.5">
+                                {isSpeaking ? (
+                                    <span className="text-accent animate-pulse flex items-center gap-1.5">
+                                        <Volume2 className="w-3 h-3" />
+                                        Speaking
+                                    </span>
+                                ) : (
+                                    isOllamaRunning ? 'Online' : 'Disconnected'
+                                )}
                             </span>
                         </div>
                     </div>
                 </div>
-
-                {isSpeaking && (
-                    <div className="flex items-center gap-1 text-accent animate-pulse bg-accent/10 px-3 py-1.5 rounded-full border border-accent/20">
-                        <Volume2 className="w-3.5 h-3.5" />
-                        <span className="text-[10px] font-bold uppercase tracking-wider">Speaking</span>
-                    </div>
-                )}
 
                 <div className="flex items-center gap-2">
                     {isOllamaRunning && (
@@ -254,6 +298,8 @@ export function ChatInterface() {
                     >
                         {isVoiceMode ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
                     </button>
+
+                    <VoiceSettings />
 
                     <button
                         onClick={clearChat}

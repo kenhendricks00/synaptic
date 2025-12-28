@@ -23,14 +23,15 @@ export function AIActions({ className }: AIActionsProps) {
   if (!activeNoteId) return null;
 
   const handleAction = async () => {
-    if (!input.trim()) return;
-
     try {
       if (mode === 'ask') {
+        if (!input.trim()) return;
         await askAboutNote(activeNoteId, input);
       } else if (mode === 'summarize') {
+        // Summarize doesn't need input
         await summarizeNote(activeNoteId);
       } else if (mode === 'edit') {
+        if (!input.trim()) return;
         await editNoteWithAI(activeNoteId, input);
       }
 
@@ -147,7 +148,7 @@ export function AIActions({ className }: AIActionsProps) {
 
               <button
                 onClick={handleAction}
-                disabled={!input.trim() || isLoading}
+                disabled={(mode !== 'summarize' && !input.trim()) || isLoading}
                 className="w-full px-4 py-2.5 bg-accent hover:bg-accent-hover text-white rounded-xl text-sm font-medium transition-all hover:shadow-lg hover:shadow-accent/25 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? (

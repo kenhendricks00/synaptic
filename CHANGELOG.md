@@ -5,6 +5,27 @@ All notable changes to Synaptic will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2025-12-27
+
+### 🚀 Voice Mode Experience Upgrade
+
+This release brings a massive overhaul to the Voice Mode, moving entirely offline for TTS and refining the conversation flow.
+
+#### 🧠 Local Intelligence
+- **Offline High-Quality TTS**: Integrated `Kokoro` (82M) directly into the app. No more external dependencies or slow system voices.
+- **WebGPU Acceleration**: Powered by ONNX Runtime with WebGPU backend for blazing fast audio generation on supported hardware.
+- **Sentence Streaming**: Audio now plays instantly as it is generated (sentence-by-sentence), eliminating perceived latency.
+
+#### 🎨 Visuals
+- **AI Glow**: Added a premium animated mesh gradient that swirls when the AI speaks.
+- **Ambient Pulse**: Subtle breathing glow effect when the microphone is ready for input.
+- **Layout Fixes**: Moved "Speaking" indicator to status bar to preserve header layout.
+
+#### 🗣️ Interaction
+- **Continuous Conversation**: The AI now automatically re-enables the microphone after executing tools (like creating notes), allowing for seamless multi-turn workflows.
+- **New Voices**: Added 9 distinct high-quality voices, defaulting to "Heart" (US Female).
+- **Barge-In**: Speaking instantly stops the AI's audio response.
+
 ## [1.0.0] - 2025-12-27
 
 ### 🎉 Initial Release

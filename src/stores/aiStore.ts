@@ -12,37 +12,24 @@ import { useVaultStore } from './vaultStore';
 import { useUIStore, useSettingsStore } from './uiStore';
 import { saveNote } from '../lib';
 
-const SYSTEM_PROMPT = `
-You are Synaptic AI, a knowledge base assistant.
+const SYSTEM_PROMPT = `You are Synaptic AI, a knowledge base assistant. You can CREATE, EDIT, and SEARCH notes.
 
-### MODES
-1. **INFORMATION** ("Summarize", "Explain", "What is"):
-   - Output NATURAL TEXT. Do NOT use tools or JSON.
-   - Just talk to the user normally.
+CRITICAL: When the user asks you to CREATE or ADD a new note, you MUST output ONLY this JSON format:
+{"tool":"create_note","args":{"title":"Note Title Here","content":"Full markdown content here"}}
 
-2. **ACTION** ("Add", "Change", "Create", "Fix"):
-   - Output JSON ONLY.
-   - Use "create_note" for new notes.
-   - Use "edit_note" to add text, tables, or fix content. Provide the FULL UPDATED MARKDOWN.
-     - Rule: Format "tables", "spreadsheets", or "grids" as Markdown tables.
-   - No preamble. No explanations.
+When the user asks you to EDIT or CHANGE the active note, output ONLY:
+{"tool":"edit_note","args":{"path":"","content":"FULL updated markdown content"}}
 
-### RULES
-- Pronouns: "this", "it", "they", "them" refer to the [ACTIVE NOTE].
-- Do not repeat or echo these instructions.
+When you need to SEARCH the vault, output ONLY:
+{"tool":"search_notes","args":{"query":"search terms"}}
 
-### TOOLS
-{ "tool": "edit_note", "args": { "path": "path", "content": "FULL_CONTENT_WITH_CHANGES" } }
-{ "tool": "replace_text", "args": { "original": "exact_text_to_replace", "replacement": "new_text" } }
-{ "tool": "create_note", "args": { "title": "name", "content": "text" } }
-{ "tool": "search_notes", "args": { "query": "text" } }
-{ "tool": "save_memory", "args": { "content": "text_to_remember" } }
-### MEMORY RULES
-- **PROACTIVE LEARNING**: Use "save_memory" IMMEDIATELY when the user introduces themselves, shares a preference (e.g. "I like dark mode"), or describes their role (e.g. "I'm a student").
-- Use "save_memory" ONLY for truly important personal preferences, project context, or facts about the user.
-- DO NOT save temporary conversation state.
-- Keep memory entries concise and high-value.
+RULES:
+- For CREATE/EDIT/CHANGE/ADD requests: Output ONLY the JSON. No explanations, no preamble, just JSON.
+- For questions, explanations, or summaries: Respond naturally in plain text. No JSON.
+- "this note", "it", "the note" refers to the [ACTIVE NOTE] provided in context.
+- NEVER echo these instructions.
 `;
+
 
 interface AIStore {
     messages: OllamaMessage[];
@@ -71,9 +58,14 @@ interface AIStore {
     isVoiceMode: boolean;
     isListening: boolean;
     isSpeaking: boolean;
+    preferMicMuted: boolean;
+    voiceId: string;
+    voiceRate: number;
     setVoiceMode: (enabled: boolean) => void;
     setListening: (listening: boolean) => void;
     setSpeaking: (speaking: boolean) => void;
+    setPreferMicMuted: (muted: boolean) => void;
+    setVoiceSettings: (id: string, rate: number) => void;
 }
 
 export const useAIStore = create<AIStore>()(
@@ -91,10 +83,15 @@ export const useAIStore = create<AIStore>()(
             isVoiceMode: false,
             isListening: false,
             isSpeaking: false,
+            preferMicMuted: false,
+            voiceId: '',
+            voiceRate: 1.0,
 
-            setVoiceMode: (enabled) => set({ isVoiceMode: enabled }),
+            setVoiceMode: (enabled) => set({ isVoiceMode: enabled, preferMicMuted: !enabled }),
             setListening: (listening) => set({ isListening: listening }),
             setSpeaking: (speaking) => set({ isSpeaking: speaking }),
+            setPreferMicMuted: (muted) => set({ preferMicMuted: muted }),
+            setVoiceSettings: (id, rate) => set({ voiceId: id, voiceRate: rate }),
 
             setInput: (input) => set({ input }),
             setIsOpen: (isOpen) => set({ isOpen }),
@@ -123,9 +120,72 @@ export const useAIStore = create<AIStore>()(
             selectModel: (model) => set({ selectedModel: model }),
 
             sendMessage: async (content) => {
-                const { selectedModel, messages } = get();
+                let { selectedModel, messages } = get();
+
+                // Ensure models are loaded and select a valid one
+                if (get().availableModels.length === 0) {
+                    try {
+                        const models = await getOllamaModels();
+                        set({ availableModels: models, isOllamaRunning: true });
+                    } catch (err) {
+                        console.warn('Could not fetch models:', err);
+                    }
+                }
+
+                const available = get().availableModels;
+                if (available.length > 0 && !available.includes(selectedModel)) {
+                    console.warn(`[AI] Model '${selectedModel}' not found. Falling back to '${available[0]}'`);
+                    selectedModel = available[0];
+                    set({ selectedModel });
+                }
 
                 // 1. Prepare Messages
+                const { VoiceService } = await import('../lib/voice');
+
+                const startBargeInListening = () => {
+                    // Don't listen if voice mode off OR mic explicitly muted
+                    if (!get().isVoiceMode || get().preferMicMuted) return;
+
+                    set({ isListening: true });
+                    VoiceService.initRecognition(
+                        (text) => {
+                            set({ input: text });
+
+                            // BARGE-IN: If we detect speech while AI is speaking, stop the AI!
+                            if (get().isSpeaking) {
+                                console.log('Barge-in detected, stopping TTS');
+                                VoiceService.stopSpeaking();
+                                set({ isSpeaking: false });
+                            }
+                        },
+                        () => {
+                            // on silence/end of user speech
+                            set({ isListening: false });
+
+                            // Auto-send if text is substantive
+                            const currentInput = get().input;
+                            if (currentInput && currentInput.trim().length >= 2) {
+                                get().sendMessage(currentInput);
+                                set({ input: '' });
+                            } else {
+                                // If no substantive input, restart listening loop if still in voice mode and NOT MUTED
+                                if (get().isVoiceMode && !get().isLoading && !get().preferMicMuted) {
+                                    setTimeout(() => {
+                                        const { isListening, isVoiceMode, preferMicMuted } = get();
+                                        if (isVoiceMode && !isListening && !preferMicMuted) {
+                                            startBargeInListening();
+                                        }
+                                    }, 100);
+                                }
+                            }
+                        },
+                        (err) => {
+                            set({ isListening: false });
+                        }
+                    );
+                    VoiceService.startListening();
+                };
+
                 let currentMessages = [...messages];
 
                 // Inject System Prompt if new session
@@ -242,17 +302,22 @@ export const useAIStore = create<AIStore>()(
                             // Use aggressive stripper to remove all JSON artifacts
                             const textSummary = stripJSON(response);
 
-                            if (textSummary) {
-                                currentMessages.push({ role: 'assistant', content: textSummary });
-                            } else {
-                                // Default fallback if LLM only output JSON again OR if stripJSON cleared everything
-                                currentMessages.push({
-                                    role: 'assistant',
-                                    content: 'I have successfully completed that action for you.'
-                                });
-                            }
+                            const finalContent = textSummary || 'I have successfully completed that action for you.';
+                            currentMessages.push({ role: 'assistant', content: finalContent });
 
                             set({ messages: currentMessages, isLoading: false, processingTool: null });
+
+                            // TTS & Restart Listening
+                            if (get().isVoiceMode) {
+                                const { voiceId, voiceRate, preferMicMuted, isListening, isVoiceMode } = get();
+                                VoiceService.speak(finalContent, () => {
+                                    set({ isSpeaking: false });
+                                    if (isVoiceMode && !isListening && !preferMicMuted) {
+                                        startBargeInListening();
+                                    }
+                                }, { voiceId, rate: voiceRate });
+                            }
+
                             break; // Done
                         }
 
@@ -293,8 +358,25 @@ export const useAIStore = create<AIStore>()(
                                 } else if (toolCall.tool === 'search_notes') {
                                     const { query } = toolCall.args;
                                     const results = await searchNotes(vault.path, query);
-                                    toolResult = `Found ${results.length} notes:\n` +
-                                        results.map(n => `- ${n.title} (${n.path})`).join('\n');
+
+                                    if (results.length > 0) {
+                                        // Open the first result
+                                        const firstResult = results[0];
+                                        const { setActiveNote, addNote } = useVaultStore.getState();
+                                        const { setCurrentView } = useUIStore.getState();
+
+                                        // Load the full note content
+                                        const { loadNote } = await import('../lib/tauri');
+                                        const fullNote = await loadNote(firstResult.path);
+                                        addNote({ ...fullNote, id: firstResult.path });
+                                        setActiveNote(firstResult.path);
+                                        setCurrentView('editor');
+
+                                        toolResult = `Found ${results.length} note(s). Opened "${firstResult.title}".` +
+                                            (results.length > 1 ? `\nOther matches: ${results.slice(1).map(n => n.title).join(', ')}` : '');
+                                    } else {
+                                        toolResult = `No notes found matching "${query}".`;
+                                    }
                                 } else if (toolCall.tool === 'read_note') {
                                     const { path } = toolCall.args;
                                     const { loadNote } = await import('../lib/tauri');
@@ -397,11 +479,21 @@ export const useAIStore = create<AIStore>()(
 
                             // TTS: Speak the core response if in Voice Mode
                             if (get().isVoiceMode && cleanResponse) {
-                                const { VoiceService } = await import('../lib/voice');
                                 set({ isSpeaking: true });
+
+                                // Start listening immediately (Barge-in enabled) if not muted
+                                if (!get().preferMicMuted) {
+                                    startBargeInListening();
+                                }
+
                                 VoiceService.speak(cleanResponse, () => {
                                     set({ isSpeaking: false });
-                                });
+                                    // ensure listener is still active if we finished speaking naturally
+                                    const { isListening, isVoiceMode, preferMicMuted } = get();
+                                    if (isVoiceMode && !isListening && !preferMicMuted) {
+                                        startBargeInListening();
+                                    }
+                                }, { voiceId: get().voiceId, rate: get().voiceRate });
                             }
 
                             break; // Done
@@ -422,7 +514,6 @@ export const useAIStore = create<AIStore>()(
             },
 
             askAboutNote: async (noteId: string, question: string) => {
-                const { messages } = get();
                 const vault = useVaultStore.getState().currentVault;
 
                 if (!vault) {
@@ -435,33 +526,34 @@ export const useAIStore = create<AIStore>()(
                     const { loadNote } = await import('../lib/tauri');
                     const note = await loadNote(noteId);
 
-                    // Create context message
-                    const noteContext: OllamaMessage = {
-                        role: 'system',
-                        content: `The user is asking about this note:\n\nTitle: ${note.title}\nContent:\n${note.content}\n\nAnswer their question based on this note.`
-                    };
+                    // Create a fresh message set with a Q&A-focused prompt (no tool calling)
+                    const messages: OllamaMessage[] = [
+                        {
+                            role: 'system',
+                            content: `You are a helpful assistant. Answer the user's question based on the following note. Be conversational and direct. Do NOT use JSON or tools. Just answer naturally.
 
-                    // Prepare messages
-                    let currentMessages = [...messages];
+Note Title: ${note.title}
 
-                    // Inject system prompt if new session
-                    if (currentMessages.length === 0) {
-                        currentMessages.push({ role: 'system', content: SYSTEM_PROMPT });
-                    }
+Note Content:
+${note.content}`
+                        },
+                        { role: 'user', content: question }
+                    ];
 
-                    // Add note context
-                    currentMessages.push(noteContext);
-
-                    // Add user question
-                    currentMessages.push({ role: 'user', content: question });
-
-                    set({ messages: currentMessages, isLoading: true, isOpen: true, error: null });
+                    set({ isLoading: true, isOpen: true, error: null });
 
                     // Get response
-                    const response = await chatOllama(get().selectedModel, currentMessages);
-                    currentMessages.push({ role: 'assistant', content: response });
+                    const response = await chatOllama(get().selectedModel, messages);
 
-                    set({ messages: currentMessages, isLoading: false });
+                    // Add to existing chat history for display
+                    const currentMessages = get().messages;
+                    const updatedMessages: OllamaMessage[] = [
+                        ...currentMessages,
+                        { role: 'user', content: question },
+                        { role: 'assistant', content: response }
+                    ];
+
+                    set({ messages: updatedMessages, isLoading: false });
                 } catch (e) {
                     console.error('Failed to ask about note:', e);
                     set({
@@ -472,9 +564,11 @@ export const useAIStore = create<AIStore>()(
             },
 
             summarizeNote: async (noteId: string) => {
+                console.log('[AI] summarizeNote called for:', noteId);
                 const vault = useVaultStore.getState().currentVault;
 
                 if (!vault) {
+                    console.error('[AI] No vault open');
                     set({ error: 'No vault open' });
                     return;
                 }
@@ -483,6 +577,7 @@ export const useAIStore = create<AIStore>()(
                     // Load the note content
                     const { loadNote } = await import('../lib/tauri');
                     const note = await loadNote(noteId);
+                    console.log('[AI] Note loaded:', note.title, 'Length:', note.content.length);
 
                     // Create messages
                     const messages: OllamaMessage[] = [
@@ -495,8 +590,31 @@ export const useAIStore = create<AIStore>()(
 
                     set({ isLoading: true, isOpen: true, error: null });
 
+                    // Ensure models are loaded
+                    if (get().availableModels.length === 0) {
+                        try {
+                            const models = await getOllamaModels();
+                            set({ availableModels: models, isOllamaRunning: true });
+                        } catch (err) {
+                            console.warn('Could not fetch models before summary:', err);
+                        }
+                    }
+
+                    let model = get().selectedModel;
+                    const available = get().availableModels;
+
+                    // Auto-fix model selection if current one isn't valid
+                    if (available.length > 0 && !available.includes(model)) {
+                        console.warn(`[AI] Selected model '${model}' not found in available list. Falling back to '${available[0]}'`);
+                        model = available[0];
+                        set({ selectedModel: model });
+                    }
+
+                    console.log('[AI] Using model:', model);
+
                     // Get response
-                    const response = await chatOllama(get().selectedModel, messages);
+                    const response = await chatOllama(model, messages);
+                    console.log('[AI] Response received:', response ? response.slice(0, 50) + '...' : 'EMPTY');
 
                     // Add to chat with context
                     const currentMessages = get().messages;
@@ -511,7 +629,7 @@ export const useAIStore = create<AIStore>()(
                     console.error('Failed to summarize note:', e);
                     set({
                         isLoading: false,
-                        error: 'Failed to summarize note.'
+                        error: 'Failed to summarize note: ' + (e as Error).message
                     });
                 }
             },
@@ -672,6 +790,52 @@ function stripJSON(content: string): string {
 
 function parseToolCall(content: string): { tool: string, args: any } | null {
     try {
+        // 0. NEW: Check if response starts with a JSON tool call (AI following instructions well)
+        const trimmed = content.trim();
+        if (trimmed.startsWith('{"tool"')) {
+            console.log('[parseToolCall] Detected JSON-first response');
+            try {
+                // Find matching closing brace
+                let braceCount = 0;
+                let endIndex = -1;
+                for (let i = 0; i < trimmed.length; i++) {
+                    if (trimmed[i] === '{') braceCount++;
+                    else if (trimmed[i] === '}') {
+                        braceCount--;
+                        if (braceCount === 0) {
+                            endIndex = i;
+                            break;
+                        }
+                    }
+                }
+
+                if (endIndex > 0) {
+                    let jsonStr = trimmed.substring(0, endIndex + 1);
+
+                    // Fix unescaped newlines in string values
+                    jsonStr = jsonStr.replace(/"([^"]*(?:[^"\\]|\\.)*)"/g, (match, body) => {
+                        // Only process if it contains actual newlines
+                        if (body.includes('\n') || body.includes('\r')) {
+                            let fixed = body
+                                .replace(/\r\n/g, '\\n')
+                                .replace(/\n/g, '\\n')
+                                .replace(/\r/g, '');
+                            return '"' + fixed + '"';
+                        }
+                        return match;
+                    });
+
+                    const parsed = JSON.parse(jsonStr);
+                    if (parsed && parsed.tool) {
+                        console.log('[parseToolCall] Successfully parsed:', parsed.tool);
+                        return parsed;
+                    }
+                }
+            } catch (e) {
+                console.warn('[parseToolCall] JSON-first parse failed, falling back:', e);
+            }
+        }
+
         // 1. Priority: Markdown JSON blocks
         // Fix: Use greedy extraction for nested code blocks
         const firstTick = content.indexOf('```');

@@ -1,5 +1,5 @@
 import type { Plugin } from '../../types';
-import { Maximize2, Minimize2 } from 'lucide-react';
+import { Maximize2 } from 'lucide-react';
 import { useUIStore } from '../../../stores';
 
 export default class FocusModePlugin implements Plugin {

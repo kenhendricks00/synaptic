@@ -179,7 +179,7 @@ export const useAIStore = create<AIStore>()(
                                 }
                             }
                         },
-                        (err) => {
+                        () => {
                             set({ isListening: false });
                         }
                     );

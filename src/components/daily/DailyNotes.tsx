@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Calendar, CloudRain, Smile, Meh, Frown, Heart } from 'lucide-react';
 import { useVaultStore, useSettingsStore, usePluginStore } from '../../stores';
-import { loadNote, createNote, saveNote, getGreeting, cn } from '../../lib';
+import { saveNote, getGreeting, cn } from '../../lib';
 import { NoteEditor } from '../editor';
 import type { Note } from '../../types';
 import type { TemplaterPluginInterface } from '../../plugins/built-in/templater';
@@ -41,12 +41,6 @@ export function DailyNotes() {
 
             try {
                 const today = new Date();
-                const formattedDate = today.toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                });
 
                 // Templater check and content generation
                 const templater = usePluginStore.getState().installed.get('templater');

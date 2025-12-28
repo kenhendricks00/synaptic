@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAIStore } from '../../stores/aiStore';
 import { VoiceService } from '../../lib/voice';
 import { Settings, X, Play, Loader2 } from 'lucide-react';

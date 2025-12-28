@@ -100,4 +100,10 @@ Synaptic is inspired by the incredible work of the open-source community:
 - **[Kokoro TTS](https://huggingface.co/hexgrad/Kokoro-82M)** - High-quality local text-to-speech model
 
 # 📄 License
-MIT License - See [LICENSE](LICENSE) for details.
+This project is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)** - see the [LICENSE](LICENSE) file for details.
+
+### 🛡️ Why AGPL-3.0?
+Synaptic is an open-source, local-first companion. We chose the AGPL-3.0 license to ensure that:
+1. **The community benefits from all improvements**: If you modify the code and distribute it, you must share those changes.
+2. **The "Cloud Loophole" is closed**: If you host this as a network service, you must provide the source code to your users.
+3. **Synaptic stays open forever**: It protects the project from being used in proprietary derivatives while keeping it free for everyone to use and improve.

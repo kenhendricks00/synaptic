@@ -38,10 +38,10 @@ Launch Synaptic, select a folder as your **Vault**, and start writing. Your note
     - **[[Wikilinks]]** to connect your ideas
     - **Backlinks Panel** to see what notes reference the current one
     - **Knowledge Graph** to visualize your entire vault
-2. **AI Integration (via Ollama)**:
-    - **Chat with your Notes**: Ask questions about your knowledge base
-    - **Smart Summarization**: Get quick summaries of long documents
-    - **Brainstorming Partner**: Generate ideas based on your existing notes
+2. **AI Integration**:
+    - **Local Intelligence (Ollama)**: Chat with your notes, summarize documents, and brainstorm ideas.
+    - **Voice Mode (Kokoro TTS)**: Fluid, natural voice conversations with offline neural speech.
+    - **Context Aware**: The AI understands your active note and vault content.
 3. **Daily Notes**:
     - Quick capture for daily thoughts and logs
     - Calendar widget for easy navigation
@@ -70,7 +70,9 @@ Synaptic uses **Ollama** to run AI models locally. To enable AI features:
 ```bash
 ollama pull llama3.1:8b
 ```
-3. Launch Synaptic and start chatting with your notes!
+3. Launch Synaptic and start chatting!
+
+> **Note**: The high-quality voice model (Kokoro, ~80MB) will be downloaded automatically the first time you enable Voice Mode. It runs 100% offline after that.
 
 # 🏗️ Build From Source
 Clone the repository and build with Tauri:

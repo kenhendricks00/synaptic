@@ -16,9 +16,12 @@ import {
   Settings,
   CreateNoteModal,
   FlashcardStudy,
-  WeatherWidget
+  WeatherWidget,
+  HomeDashboard,
+  LearningHub
 } from './components';
-import { FileText, Clock, Save } from 'lucide-react';
+import { Modal } from './components/ui/Modal';
+import { FileText, Clock, Save, Square, Play, Pause } from 'lucide-react';
 import { formatDate, loadNote, loadVault, loadNotesMetadata } from './lib';
 
 function App() {
@@ -40,6 +43,7 @@ function App() {
   const { currentView, hasUnsavedChanges, wordCount, typingSpeed, pomodoroStatus, focusMode, setFocusMode } = useUIStore();
   const { installed } = usePluginStore();
   const { settings, updateSettings } = useSettingsStore();
+  const { podcastStatus, podcastCurrentSpeaker, stopPodcast, pausePodcast, resumePodcast } = useAIStore();
 
   // Apply theme
   useEffect(() => {
@@ -164,6 +168,10 @@ function App() {
             useUIStore.getState().setCurrentView('graph');
           }
           break;
+        case '4':
+          e.preventDefault();
+          useUIStore.getState().setCurrentView('learning');
+          break;
         case ',':
           e.preventDefault();
           useUIStore.getState().setCurrentView('settings');
@@ -247,6 +255,7 @@ function App() {
           <header className="flex items-center justify-between px-4 py-2 border-b border-border bg-background-secondary/50">
             <div className="flex items-center gap-3">
               <span className="text-sm text-foreground-secondary py-1 px-2.5 bg-background-tertiary rounded-md font-medium">
+                {currentView === 'home' && 'Dashboard'}
                 {currentView === 'editor' && 'Notes'}
                 {currentView === 'daily' && 'Daily Notes'}
                 {currentView === 'graph' && 'Knowledge Graph'}
@@ -255,6 +264,7 @@ function App() {
                 {currentView === 'plugins' && 'Plugin Manager'}
                 {currentView === 'marketplace' && 'Plugin Marketplace'}
                 {currentView === 'study' && 'Flashcard Study'}
+                {currentView === 'learning' && 'Learning Hub'}
               </span>
             </div>
 
@@ -306,6 +316,61 @@ function App() {
               )}
               <div className="w-px h-3 bg-border mx-1" />
 
+              {/* Podcast Controls */}
+              {(podcastStatus === 'playing' || podcastStatus === 'paused' || podcastStatus === 'generating') && (
+                <>
+                  <div className="flex items-center gap-2 px-2 py-1 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-lg border border-purple-500/30">
+                    {podcastStatus === 'generating' ? (
+                      <>
+                        <div className="w-3 h-3 border-2 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
+                        <span className="text-xs font-medium text-purple-400">Generating...</span>
+                      </>
+                    ) : (
+                      <>
+                        {/* Mini Waveform */}
+                        <div className="flex items-center gap-0.5 h-4">
+                          {[...Array(4)].map((_, i) => (
+                            <div
+                              key={i}
+                              className="w-0.5 bg-gradient-to-t from-purple-500 to-pink-500 rounded-full"
+                              style={{
+                                animation: podcastStatus === 'playing' ? `waveform 0.8s ease-in-out infinite` : 'none',
+                                animationDelay: `${i * 0.1}s`,
+                                height: podcastStatus === 'paused' ? '40%' : '100%',
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-xs font-medium text-purple-400">
+                          {podcastCurrentSpeaker || (podcastStatus === 'paused' ? 'Paused' : 'Playing')}
+                        </span>
+                        {/* Play/Pause */}
+                        <button
+                          onClick={() => podcastStatus === 'paused' ? resumePodcast() : pausePodcast()}
+                          className="p-1 hover:bg-purple-500/20 rounded transition-colors"
+                          title={podcastStatus === 'paused' ? 'Resume' : 'Pause'}
+                        >
+                          {podcastStatus === 'paused' ? (
+                            <Play className="w-3 h-3 text-purple-400" />
+                          ) : (
+                            <Pause className="w-3 h-3 text-purple-400" />
+                          )}
+                        </button>
+                        {/* Stop */}
+                        <button
+                          onClick={() => stopPodcast()}
+                          className="p-1 hover:bg-red-500/20 rounded transition-colors"
+                          title="Stop Podcast"
+                        >
+                          <Square className="w-3 h-3 text-red-400" />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                  <div className="w-px h-3 bg-border mx-1" />
+                </>
+              )}
+
               {/* Weather Widget */}
               {installed.get('weather')?.enabled && (
                 <>
@@ -324,6 +389,7 @@ function App() {
 
         {/* Content Area */}
         <div className="flex-1 overflow-hidden">
+          {currentView === 'home' && <HomeDashboard />}
           {currentView === 'editor' && <NoteEditor />}
           {currentView === 'daily' && <DailyNotes />}
           {currentView === 'search' && <SearchView />}
@@ -332,6 +398,7 @@ function App() {
           {currentView === 'plugins' && <PluginManager />}
           {currentView === 'tasks' && <TaskView />}
           {currentView === 'study' && <FlashcardStudy />}
+          {currentView === 'learning' && <LearningHub />}
           {currentView === 'settings' && <Settings />}
         </div>
 
@@ -358,6 +425,9 @@ function App() {
 
       {/* AI Chat Interface */}
       <ChatInterface />
+
+      {/* Global Modal */}
+      <Modal />
     </div>
   );
 }

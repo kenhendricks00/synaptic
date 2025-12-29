@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../../lib';
 import { AIActions } from './AIActions';
+import { useModalStore } from '../../stores/modalStore';
 
 interface ToolbarButtonProps {
     onClick: () => void;
@@ -213,8 +214,11 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
                     <Minus className="w-4 h-4" />
                 </ToolbarButton>
                 <ToolbarButton
-                    onClick={() => {
-                        const url = window.prompt('Enter URL');
+                    onClick={async () => {
+                        const url = await useModalStore.getState().prompt('Insert Link', {
+                            placeholder: 'https://example.com',
+                            confirmText: 'Insert',
+                        });
                         if (url) {
                             editor.chain().focus().setLink({ href: url }).run();
                         }
@@ -229,8 +233,11 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
 
                 {/* Media & Advanced */}
                 <ToolbarButton
-                    onClick={() => {
-                        const url = window.prompt('Enter image URL (or paste after selecting from file)');
+                    onClick={async () => {
+                        const url = await useModalStore.getState().prompt('Insert Image', {
+                            placeholder: 'https://example.com/image.png',
+                            confirmText: 'Insert',
+                        });
                         if (url) {
                             editor.chain().focus().setImage({ src: url }).run();
                         }

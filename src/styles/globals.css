@@ -389,3 +389,49 @@
 .tiptap img.ProseMirror-selectednode {
   @apply ring-2 ring-accent ring-offset-2 ring-offset-background;
 }
+
+/* Onboarding slide animations */
+@keyframes slide-in-right {
+  from {
+    transform: translateX(50px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    transform: translateX(-50px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-left {
+  animation: slide-in-right 0.3s ease-out forwards;
+}
+
+.animate-slide-right {
+  animation: slide-in-left 0.3s ease-out forwards;
+}
+
+/* Waveform animation for podcast */
+@keyframes waveform {
+
+  0%,
+  100% {
+    transform: scaleY(0.3);
+  }
+
+  50% {
+    transform: scaleY(1);
+  }
+}

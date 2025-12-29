@@ -38,7 +38,7 @@ export const useUIStore = create<UIState>()(
     persist(
         (set) => ({
             // Initial state
-            currentView: 'editor',
+            currentView: 'home',
             sidebarOpen: true,
             sidebarWidth: 260,
             searchModalOpen: false,
@@ -105,6 +105,8 @@ const defaultSettings: Settings = {
     },
     onboardingCompleted: false,
     aiMemory: '',
+    userName: '',
+    userBirthday: '',
 };
 
 export const useSettingsStore = create<SettingsState>()(

@@ -5,6 +5,123 @@ All notable changes to Synaptic will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2025-12-28
+
+### 🎓 Learning Hub
+
+A dedicated space for all your AI-generated learning content!
+
+- **Flashcard Decks**: Save and study AI-generated flashcards with flip-to-reveal cards
+- **Quiz Mode**: Take saved quizzes with score tracking and instant feedback
+- **Podcast Library**: Save and replay AI podcasts with full media controls
+- **Segment Scrubber**: Click to jump between podcast segments, progress bar, skip controls
+- **Keyboard Shortcut**: Press `⌘4` / `Ctrl+4` to access Learning Hub
+
+### 🎴 AI Flashcard Generation
+
+Generate study flashcards from any note!
+
+- **Smart Extraction**: AI identifies 5-8 key concepts from your note
+- **Q&A Format**: Each card has a front (question) and back (answer)
+- **Save to Hub**: Save generated decks to Learning Hub for later study
+
+### 📋 AI Quiz Generation
+
+Test your knowledge with AI-generated quizzes!
+
+- **Multiple Choice**: 5 questions with 4 options each
+- **Instant Feedback**: Green checkmark for correct, red X for incorrect
+- **Score Tracking**: See your score and performance at the end
+- **Retry or Save**: Try again immediately or save quiz for later
+
+### 🔊 Read Aloud
+
+Select any text and have it read aloud!
+
+- **Selection Menu**: New "Read Aloud" button appears when you select text
+- **Kokoro TTS**: Uses your configured voice settings
+- **Quick Access**: Perfect for proofreading or accessibility
+
+### 🏠 Welcome Dashboard
+
+A beautiful new home screen greets you on startup!
+
+- **Time-Based Greeting**: "Good morning/afternoon/evening, [Name]!" based on time of day
+- **Birthday Celebration**: Special message with sparkles on your birthday 🎂🎉
+- **Quick Actions**: Create New Note and Today's Daily Note buttons
+- **Recent Notes**: Last 5 edited notes with quick access
+- **Vault Stats**: Shows total note count
+- **Dashboard Badge**: Header shows "Dashboard" when on home view
+- **Logo Navigation**: Click the Synaptic logo to return to Dashboard from anywhere
+
+### 🎙️ AI Podcast Generation
+
+Generate NotebookLM-style podcasts about your notes!
+
+- **Two AI Hosts**: Alex (curious female) and Sam (knowledgeable male)
+- **Natural Conversation**: AI generates an engaging 2-minute discussion about your note
+- **Kokoro TTS**: Uses alternating voices (af_heart & am_adam)
+- **Live Playback**: Shows current speaker and text as podcast plays
+- **Stop Button**: Cancel playback at any time
+- **Gradient UI**: Beautiful purple-pink styling for podcast controls
+
+### 👤 Personalization Settings
+
+New dedicated "Personalization" section in Settings:
+
+- **Your Name**: Change how the AI addresses you
+- **Birthday**: Set your birthday for special greetings
+- **AI Integration**: AI system prompt now includes your name and birthday
+
+### 🤖 AI Gets Superpowers
+
+This release focuses on making the AI smarter and giving it control over the entire application through plugins.
+
+#### 🔌 AI Plugin Integration
+- **Command Execution**: The AI can now execute any registered plugin command (e.g., "Start a timer", "Toggle focus mode").
+- **Dynamic Command Discovery**: AI automatically knows about all available commands from enabled plugins.
+- **Natural Confirmations**: Improved response quality after executing commands - no more awkward echoing.
+
+#### 🧠 Smarter Context
+- **Always-On Active Note**: The currently open note is now always injected into AI context, regardless of query wording.
+- **Better Search Navigation**: Asking the AI to "find" or "open" a note now properly opens it in the editor (not just displaying content in chat).
+
+### 🎨 Custom Modal System
+- **Beautiful Prompts**: Replaced browser's ugly default `prompt()` dialogs with custom styled modals.
+- **Themed Design**: Modals match Synaptic's dark aesthetic with solid backgrounds (no transparency issues).
+- **Keyboard Support**: Enter to confirm, Escape to cancel, click outside to dismiss.
+- **Promise-based API**: New `useModalStore` with `prompt()`, `confirm()`, and `alert()` methods for easy use throughout the app.
+
+### 📜 License Update
+- **AGPL-3.0**: Relicensed from MIT to AGPL-3.0 for stronger open-source protection.
+- Updated LICENSE file, README, package.json, and website footer.
+
+### 🎙️ Personalized AI Onboarding
+- **Name Input**: First step now asks "What should I call you?" to personalize the experience.
+- **AI Voice Greeting**: "Hello [Name]! I'm Synaptic..." - the first voice greeting creates an emotional connection.
+- **Narrated Walkthrough**: Every step is read aloud by the AI with Kokoro TTS.
+- **Smart Auto-Advance**: Informational steps (Notes, Plugins) auto-advance after narration; interactive steps (Vault, AI) wait for user action.
+- **Skip Greeting on Back**: Navigation properly skips the one-time greeting step when going backwards.
+- **Auto-Refresh on Reset**: Clicking "Reset Onboarding" in Settings immediately refreshes to start the flow.
+
+### ✨ Onboarding Polish
+- **🔊 Sound Effects**: Subtle chime on step transitions
+- **⌨️ Keyboard Shortcuts**: Enter = Next, Escape = Skip
+- **💾 Progress Persistence**: Resume onboarding if closed mid-flow
+- **🎬 Caption Bar**: Beautiful glassy bar with glow effect showing narration text
+
+### 🛠️ Technical
+- New `HomeDashboard` component with greeting and quick actions
+- Added `speakSegments()` to Kokoro service for sequential voice playback
+- Added `generatePodcast()`/`stopPodcast()` to AI store
+- New `'home'` view type and default view changed to home
+- Added `userBirthday` to Settings interface
+- Personalization info injected into AI system prompt
+- New `src/stores/modalStore.ts` for global modal state management
+- New `src/components/ui/Modal.tsx` component
+- Updated `aiStore.ts` with `invoke_command` tool handler
+- Improved `SYSTEM_PROMPT` with clearer instructions for tool usage
+
 ## [1.0.1] - 2025-12-27
 
 ### 🚀 Voice Mode Experience Upgrade

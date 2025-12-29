@@ -38,6 +38,7 @@ const navItems: NavItem[] = [
     { id: 'daily', label: 'Daily', icon: Calendar, shortcut: '⌘2' },
     { id: 'search', label: 'Search', icon: Search, shortcut: '⌘K' },
     { id: 'graph', label: 'Graph', icon: Network, shortcut: '⌘3' },
+    { id: 'learning', label: 'Learning Hub', icon: GraduationCap, shortcut: '⌘4' },
     { id: 'marketplace', label: 'Marketplace', icon: Store },
     { id: 'plugins', label: 'Plugins', icon: Puzzle },
 ];
@@ -71,14 +72,18 @@ export function Sidebar() {
                 "flex items-center p-4 border-b border-border",
                 sidebarOpen ? "justify-between" : "justify-center"
             )}>
-                <div className="flex items-center gap-2">
+                <button
+                    onClick={() => setCurrentView('home')}
+                    className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                    title="Go to Dashboard"
+                >
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-purple-600 flex items-center justify-center overflow-hidden flex-shrink-0">
                         <img src={logo} alt="Synaptic Logo" className="w-6 h-6 object-contain brightness-0 invert" />
                     </div>
                     {sidebarOpen && (
                         <span className="font-semibold text-foreground truncate">Synaptic</span>
                     )}
-                </div>
+                </button>
 
                 {sidebarOpen && (
                     <button

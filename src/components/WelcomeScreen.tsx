@@ -163,7 +163,7 @@ export function WelcomeScreen() {
 
             {/* Footer */}
             <div className="absolute bottom-6 text-foreground-muted text-sm">
-                <span className="opacity-50">v1.0.1</span>
+                <span className="opacity-50">v1.0.2</span>
                 <span className="mx-2">·</span>
                 <span className="opacity-50">Built with Tauri + React</span>
             </div>

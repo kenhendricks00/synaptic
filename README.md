@@ -41,8 +41,16 @@ Launch Synaptic, select a folder as your **Vault**, and start writing. Your note
 2. **AI Integration**:
     - **Local Intelligence (Ollama)**: Chat with your notes, summarize documents, and brainstorm ideas.
     - **Voice Mode (Kokoro TTS)**: Fluid, natural voice conversations with offline neural speech.
+    - **AI Podcasts**: Generate NotebookLM-style two-host discussions about your notes.
+    - **AI Flashcards & Quizzes**: Auto-generate study materials from any note.
+    - **Read Aloud**: Select text and have it spoken using Kokoro TTS.
     - **Context Aware**: The AI understands your active note and vault content.
-3. **Daily Notes**:
+3. **Learning Hub** (`⌘4`):
+    - Save AI-generated flashcards, quizzes, and podcasts for later study
+    - Interactive flashcard study with flip-to-reveal
+    - Quiz mode with score tracking and instant feedback
+    - Podcast player with segment scrubber and media controls
+4. **Daily Notes**:
     - Quick capture for daily thoughts and logs
     - Calendar widget for easy navigation
     - Customizable templates via the Templater plugin

@@ -108,6 +108,8 @@ export interface Settings {
     corePlugins: Record<string, boolean>; // Core feature toggles
     onboardingCompleted: boolean; // Track if onboarding is done
     aiMemory: string; // Persistent instructions for the AI
+    userName: string; // User's display name
+    userBirthday: string; // User's birthday (YYYY-MM-DD format)
 }
 
 // AI types
@@ -124,7 +126,7 @@ export interface AIState {
 }
 
 // UI types
-export type View = 'editor' | 'graph' | 'daily' | 'search' | 'settings' | 'plugins' | 'marketplace' | 'tasks' | 'study';
+export type View = 'home' | 'editor' | 'graph' | 'daily' | 'search' | 'settings' | 'plugins' | 'marketplace' | 'tasks' | 'study' | 'learning';
 
 export interface UIState {
     currentView: View;

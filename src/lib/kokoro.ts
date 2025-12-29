@@ -18,6 +18,8 @@ class KokoroService {
     private isInitializing = false;
     private audioContext: AudioContext | null = null;
     private currentSource: AudioBufferSourceNode | null = null;
+    private isPaused = false;
+    private pauseResolve: (() => void) | null = null;
 
     async initialize() {
         if (this.tts) return this.tts;
@@ -166,9 +168,93 @@ class KokoroService {
         });
     }
 
+    /**
+     * Speak multiple segments sequentially with different voices (for podcast feature)
+     */
+    async speakSegments(
+        segments: Array<{ text: string; voiceId: string }>,
+        onSegmentStart?: (index: number, text: string) => void,
+        onEnd?: () => void
+    ) {
+        try {
+            const tts = await this.initialize();
+
+            const podcastId = Date.now();
+            (this as any)._podcastSequenceId = podcastId;
+
+            console.log('[Podcast] Starting playback with', segments.length, 'segments');
+
+            for (let i = 0; i < segments.length; i++) {
+                // Check if stopped
+                if ((this as any)._podcastSequenceId !== podcastId) {
+                    console.log('[Podcast] Stopped at segment', i);
+                    return;
+                }
+
+                const segment = segments[i];
+                if (!segment.text.trim()) continue;
+
+                console.log(`[Podcast] Playing segment ${i + 1}/${segments.length}:`, segment.voiceId);
+
+                // Notify segment start
+                if (onSegmentStart) {
+                    onSegmentStart(i, segment.text);
+                }
+
+                // Generate audio for this segment directly (don't use speak() to avoid sequence ID conflict)
+                const result = await tts.generate(segment.text, { voice: segment.voiceId });
+
+                // Check again if stopped during generation
+                if ((this as any)._podcastSequenceId !== podcastId) {
+                    console.log('[Podcast] Stopped during generation');
+                    return;
+                }
+
+                // Get audio context
+                if (!this.audioContext) {
+                    this.audioContext = new AudioContext();
+                }
+
+                // Create audio buffer
+                const sampleRate = result.sampling_rate || 24000;
+                const audioBuffer = this.audioContext.createBuffer(1, result.audio.length, sampleRate);
+                audioBuffer.copyToChannel(result.audio as any, 0);
+
+                // Play and wait for completion
+                await new Promise<void>((resolve) => {
+                    const source = this.audioContext!.createBufferSource();
+                    source.buffer = audioBuffer;
+                    source.connect(this.audioContext!.destination);
+                    this.currentSource = source;
+
+                    source.onended = () => {
+                        this.currentSource = null;
+                        resolve();
+                    };
+
+                    source.start();
+                });
+
+                // Small pause between speakers
+                if (i < segments.length - 1) {
+                    await new Promise(r => setTimeout(r, 400));
+                }
+            }
+
+            console.log('[Podcast] Playback complete');
+            if (onEnd && (this as any)._podcastSequenceId === podcastId) {
+                onEnd();
+            }
+        } catch (error) {
+            console.error('[Podcast] Playback error:', error);
+            if (onEnd) onEnd();
+        }
+    }
+
     stop() {
-        // Invalidate current sequence to stop generation loop
+        // Invalidate sequences to stop both regular speech and podcasts
         (this as any)._currentSequenceId = 0;
+        (this as any)._podcastSequenceId = 0;
 
         if (this.currentSource) {
             try {
@@ -178,6 +264,33 @@ class KokoroService {
             }
             this.currentSource = null;
         }
+
+        // Also unpause if stopped
+        this.isPaused = false;
+        if (this.pauseResolve) {
+            this.pauseResolve();
+            this.pauseResolve = null;
+        }
+    }
+
+    pause() {
+        if (!this.isPaused && this.audioContext) {
+            this.isPaused = true;
+            this.audioContext.suspend();
+            console.log('[Kokoro] Paused');
+        }
+    }
+
+    resume() {
+        if (this.isPaused && this.audioContext) {
+            this.isPaused = false;
+            this.audioContext.resume();
+            console.log('[Kokoro] Resumed');
+        }
+    }
+
+    getIsPaused() {
+        return this.isPaused;
     }
 }
 

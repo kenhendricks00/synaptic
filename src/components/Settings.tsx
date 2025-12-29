@@ -12,12 +12,14 @@ import {
     Github,
     ExternalLink,
     RefreshCw,
-    AlertTriangle
+    AlertTriangle,
+    User
 } from 'lucide-react';
 import { getPluginIcon } from './marketplace/icons';
 
 type SettingsTab =
     | 'general'
+    | 'personalization'
     | 'appearance'
     | 'editor'
     | 'ai'
@@ -63,6 +65,9 @@ export function Settings() {
         if (activeTab === 'general') {
             return <GeneralSettings />;
         }
+        if (activeTab === 'personalization') {
+            return <PersonalizationSettings settings={settings} updateSettings={updateSettings} />;
+        }
         if (activeTab === 'appearance') {
             return <AppearanceSettings settings={settings} updateSettings={updateSettings} />;
         }
@@ -100,6 +105,7 @@ export function Settings() {
                 <div className="p-2">
                     <div className="text-xs font-semibold text-foreground-muted uppercase px-2 py-2">Options</div>
                     <NavItem icon={<SettingsIcon className="w-4 h-4" />} label="General" active={activeTab === 'general'} onClick={() => setActiveTab('general')} />
+                    <NavItem icon={<User className="w-4 h-4" />} label="Personalization" active={activeTab === 'personalization'} onClick={() => setActiveTab('personalization')} />
                     <NavItem icon={<Palette className="w-4 h-4" />} label="Appearance" active={activeTab === 'appearance'} onClick={() => setActiveTab('appearance')} />
                     <NavItem icon={<Type className="w-4 h-4" />} label="Editor" active={activeTab === 'editor'} onClick={() => setActiveTab('editor')} />
                     <NavItem icon={<Brain className="w-4 h-4" />} label="AI" active={activeTab === 'ai'} onClick={() => setActiveTab('ai')} />
@@ -219,6 +225,8 @@ function GeneralSettings() {
 
     const handleResetOnboarding = () => {
         updateSettings({ onboardingCompleted: false });
+        // Auto-refresh to trigger onboarding
+        window.location.reload();
     };
 
     const handleFactoryReset = async () => {
@@ -295,6 +303,65 @@ function GeneralSettings() {
                             {isResetting ? 'Resetting...' : 'Factory Reset'}
                         </button>
                     </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function PersonalizationSettings({ settings, updateSettings }: { settings: any; updateSettings: (s: any) => void }) {
+    const [localName, setLocalName] = useState(settings.userName || '');
+    const [localBirthday, setLocalBirthday] = useState(settings.userBirthday || '');
+
+    const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setLocalName(e.target.value);
+    };
+
+    const handleNameBlur = () => {
+        updateSettings({ userName: localName.trim() });
+    };
+
+    const handleBirthdayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setLocalBirthday(e.target.value);
+        updateSettings({ userBirthday: e.target.value });
+    };
+
+    return (
+        <div className="space-y-6">
+            <h2 className="text-xl font-semibold text-foreground">Personalization</h2>
+            <p className="text-sm text-foreground-muted">Customize how Synaptic addresses you and remembers important dates.</p>
+
+            {/* Your Name */}
+            <div className="p-4 bg-background-secondary rounded-lg border border-border">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <span className="text-sm font-medium text-foreground block">Your Name</span>
+                        <span className="text-xs text-foreground-muted">Used for personalized AI greetings</span>
+                    </div>
+                    <input
+                        type="text"
+                        value={localName}
+                        onChange={handleNameChange}
+                        onBlur={handleNameBlur}
+                        placeholder="Enter your name"
+                        className="px-3 py-2 bg-background-tertiary border border-border rounded-lg text-sm text-foreground placeholder-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent w-48"
+                    />
+                </div>
+            </div>
+
+            {/* Birthday */}
+            <div className="p-4 bg-background-secondary rounded-lg border border-border">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <span className="text-sm font-medium text-foreground block">Birthday</span>
+                        <span className="text-xs text-foreground-muted">Get a special greeting on your birthday!</span>
+                    </div>
+                    <input
+                        type="date"
+                        value={localBirthday}
+                        onChange={handleBirthdayChange}
+                        className="px-3 py-2 bg-background-tertiary border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                    />
                 </div>
             </div>
         </div>
@@ -523,7 +590,7 @@ function ToggleSetting({ label, description, checked, onChange }: { label: strin
     );
 }
 
-const APP_VERSION = '1.0.1';
+const APP_VERSION = '1.0.2';
 const GITHUB_REPO = 'kenhendricks00/synaptic';
 
 function AboutSettings() {
